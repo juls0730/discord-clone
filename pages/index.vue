@@ -1,6 +1,6 @@
 <template>
   <div>
-    Hello there
+    Hello there traveler
     <nuxt-link to="/login">Login</nuxt-link>
     <nuxt-link to="/signup">Signup</nuxt-link>
   </div>

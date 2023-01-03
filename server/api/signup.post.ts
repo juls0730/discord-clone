@@ -13,6 +13,26 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
+	const preExistingUser = await prisma.user.findFirst({
+		where: {
+			OR: [
+				{
+					username: body.username
+				},
+				{
+					email: body.email
+				}
+			]
+		}
+	})
+
+	if (preExistingUser) {
+		event.node.res.statusCode = 409;
+		return {
+			message: `User with username ${body.username} or email ${body.email} already exists`
+		}
+	}
+
 	const passwordhash = await bcryptjs.hash(body.password, 10)
 
 	const user = await prisma.user.create({

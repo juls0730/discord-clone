@@ -4,7 +4,12 @@ const prisma = new PrismaClient()
 export default defineEventHandler(async (event) => {
 	const cookies = parseCookies(event)
 
-	if (!cookies.sessionToken) return;
+	console.log(cookies.sessionToken)
+
+	if (!cookies.sessionToken) {
+		event.context.user = { authenticated: false }
+		return;
+	}
 
 	const session = await prisma.session.findFirst({
 		where: {
@@ -12,7 +17,10 @@ export default defineEventHandler(async (event) => {
 		}
 	})
 
-	if (!session) return;
+	if (!session) {
+		event.context.user = { authenticated: false }
+		return;
+	}
 	
-	event.context.authenticated = true;
+	event.context.user = { authenticated: true, id: session.userId };
 })

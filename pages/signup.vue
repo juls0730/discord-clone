@@ -19,6 +19,8 @@
 </template>
 
 <script>
+import { useUserStore } from '~/stores/user'
+
 export default {
 	data() {
 		return {
@@ -42,6 +44,8 @@ export default {
 			userId.value = user.userId
 			const token = useCookie('sessionToken')
 			token.value = user.token
+
+			useUserStore().setUser(user)
 		}
 	}
 }

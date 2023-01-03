@@ -7,9 +7,11 @@
     "prepare": "nuxi prepare"
   },
   "dependencies": {
+    "@pinia/nuxt": "^0.4.6",
     "@prisma/client": "^4.8.0",
     "bcryptjs": "^2.4.3",
     "nuxt": "^3.0.0",
+    "pinia": "^2.0.28",
     "uuid": "^9.0.0"
   },
   "devDependencies": {

@@ -1,0 +1,22 @@
+{
+  "private": true,
+  "scripts": {
+    "dev": "nuxi dev",
+    "build": "nuxi build",
+    "start": "nuxi start",
+    "prepare": "nuxi prepare"
+  },
+  "dependencies": {
+    "@prisma/client": "^4.8.0",
+    "bcryptjs": "^2.4.3",
+    "nuxt": "^3.0.0",
+    "uuid": "^9.0.0"
+  },
+  "devDependencies": {
+    "@nuxt/kit": "^3.0.0",
+    "autoprefixer": "^10.4.13",
+    "postcss": "^8.4.20",
+    "prisma": "^4.8.0",
+    "tailwindcss": "^3.2.4"
+  }
+}

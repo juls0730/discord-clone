@@ -4,8 +4,6 @@ const prisma = new PrismaClient()
 export default defineEventHandler(async (event) => {
 	const cookies = parseCookies(event)
 
-	console.log(cookies.sessionToken)
-
 	if (!cookies.sessionToken) {
 		event.context.user = { authenticated: false }
 		return;

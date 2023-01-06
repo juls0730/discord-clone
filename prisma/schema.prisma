@@ -12,10 +12,10 @@ model User {
   email        String    @unique
   username     String    @unique
   passwordhash String
-  Server       Server[]
+  server       Server[]
   serverId     String?
-  Messages     Message[]
-  Session      Session[]
+  messages     Message[]
+  session      Session[]
 }
 
 model Server {
@@ -28,9 +28,9 @@ model Server {
 model Channel {
   id       String    @id @default(cuid())
   name     String
-  Server   Server?   @relation(fields: [serverId], references: [id])
+  server   Server?   @relation(fields: [serverId], references: [id])
   serverId String?
-  Message  Message[]
+  messages Message[]
 }
 
 model Message {

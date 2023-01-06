@@ -28,6 +28,7 @@ export default {
                 autoImports: [
                     // automatically imports `defineStore`
                     'defineStore', // import { defineStore } from 'pinia'
+                    'storeToRefs',
                     // automatically imports `defineStore` as `definePiniaStore`
                     ['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
                 ],

@@ -1,8 +1,8 @@
 <template>
-	<nav class="p-4 bg-zinc-800 grid grid-cols-1 grid-rows-[56px_1fr_56px] h-screen text-white relative">
+	<nav class="p-4 bg-[hsl(216,calc(1*7.2%),13.5%)] grid grid-cols-1 grid-rows-[56px_1fr_56px] h-screen min-w-[88px] text-white relative">
 		<div>
 			<div
-			@click="openServer('@me')"
+			@click="openServer('@me', 'dms')"
 				class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300">
 				<svg width="32"
 					height="32"
@@ -16,10 +16,10 @@
 				</svg>
 			</div>
 		</div>
-		<div class="overflow-y-scroll my-2 flex gap-2">
+		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
 			<div v-for="server in servers"
 				:key="server.id"
-				@click="openServer(server.id)"
+				@click="openServer(server.id, 'servers')"
 				class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
 				<svg width="32"
 					height="32"
@@ -89,7 +89,6 @@ import { useServerStore } from '~/stores/servers'
 export default {
 	data() {
 		return {
-			servers: useServerStore().servers,
 			createServerModelOpen: false,
 			serverName: ''
 		}
@@ -102,15 +101,12 @@ export default {
 			this.serverName = '';
 			serverStore.addServer(server)
 		},
-		openServer(id: string): void {
+		openServer(id: string, type: string): void {
 			const router = useRouter();
-			useServerStore().servers.find((e: unknown, i: number) => {
-				if (e.id === id) {
-					useServerStore().activeServer = i
-				}
-			})
+			useServerStore().setActive(type, id)
 			router.push({ path: `/channel/${id}` });
 		}
-	}
+	},
+	props: ['servers']
 }
 </script>

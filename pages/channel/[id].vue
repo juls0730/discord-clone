@@ -1,12 +1,25 @@
 <template>
-	hello world
+	{{ $route.params.id }}
 </template>
 
-<script setup async>
+<script lang="ts">
 import { useServerStore } from '~/stores/servers'
 
-const route = useRoute()
+export default {
+	async setup() {
+		const route = useRoute()
 
-const { server } = await $fetch(`/api/channel/${route.params.id}`)
-if (!useServerStore().servers.includes(server)) useServerStore().addServer(server);
+		const { server } = await $fetch(`/api/channel/${route.params.id}`)
+		if (!server) return;
+		useServerStore().addServer(server);
+		await useServerStore().setActive('servers', server.id)
+		return {
+			server
+		}
+	},
+	async updated() {
+		if (!this.server) return;
+		if (!await useServerStore().activeServer == this.server.id) await useServerStore().setActive('servers', this.server.id)
+	}
+}
 </script>

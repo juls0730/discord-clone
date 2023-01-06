@@ -16,7 +16,7 @@ export default {
 	},
 	methods: {
 		async startDM() {
-			const { server } = await $fetch('/api/channel/createDM', { method: 'post', body: { partnerId: this.userId } })
+			const { server } = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId } })
 
 			useServerStore().addDM(server)
 			useRouter().push({ path: '/channel/@me/' + server.id })

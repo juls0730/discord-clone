@@ -16,6 +16,8 @@ model User {
   serverId     String?
   messages     Message[]
   session      Session[]
+  Channel      Channel?  @relation(fields: [channelId], references: [id])
+  channelId    String?
 }
 
 model Server {
@@ -26,11 +28,13 @@ model Server {
 }
 
 model Channel {
-  id       String    @id @default(cuid())
-  name     String
-  server   Server?   @relation(fields: [serverId], references: [id])
-  serverId String?
-  messages Message[]
+  id             String    @id @default(cuid())
+  name           String
+  server         Server?   @relation(fields: [serverId], references: [id])
+  serverId       String?
+  messages       Message[]
+  DM             Boolean?
+  dmParticipants User[]
 }
 
 model Message {

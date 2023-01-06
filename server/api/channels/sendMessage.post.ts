@@ -21,31 +21,47 @@ export default defineEventHandler(async (event) => {
 	const channel = await prisma.channel.findFirst({
 		where: {
 			id: channelId
-		}
-	})
-
-	const server = await prisma.server.findFirst({
-		where: {
-			id: channel.serverId
 		},
 		include: {
-			participants: true
+			dmParticipants: true
 		}
 	})
 
-	const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
+	console.log(channel)
 
-	if (!userInServer.length > 0) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be in the server to send a message.'
+	if (!channel.DM) {
+		const server = await prisma.server.findFirst({
+			where: {
+				id: channel.serverId
+			},
+			include: {
+				participants: true
+			}
+		})
+
+		const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
+
+		if (!userInServer.length > 0) {
+			event.node.res.statusCode = 401;
+			return {
+				message: 'You must be in the server to send a message.'
+			}
 		}
-	}
 
-	if (!server) {
-		event.node.res.statusCode = 404;
-		return {
-			message: 'Server not found'
+		if (!server) {
+			event.node.res.statusCode = 404;
+			return {
+				message: 'Server not found'
+			}
+		}
+	} else {
+		const userInDM = channel.dmParticipants.filter((e) => e.id === event.context.user.id)
+
+		if (!userInDM.length > 0) {
+			event.node.res.statusCode = 401;
+			return {
+				message: 'You must be in the DM to send a message.'
+			}
 		}
 	}
 

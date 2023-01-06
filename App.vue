@@ -5,7 +5,7 @@
 				<Nav :servers="servers" />
 				<Sidebar :server="activeServer"
 					:user="user" />
-				<div class="w-full h-full">
+				<div class="w-[calc(100vw-88px-240px)] h-full">
 					<NuxtPage :user="user" />
 				</div>
 			</div>

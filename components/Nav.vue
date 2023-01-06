@@ -96,7 +96,7 @@ export default {
 	methods: {
 		async createServer() {
 			const serverStore = useServerStore();
-			const { server } = await $fetch('/api/channel/create', { method: 'post', body: { serverName: this.serverName } })
+			const { server } = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName } })
 			this.createServerModelOpen = false;
 			this.serverName = '';
 			serverStore.addServer(server)

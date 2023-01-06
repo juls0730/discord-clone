@@ -9,7 +9,7 @@ export default {
 	async setup() {
 		const route = useRoute()
 
-		const { server } = await $fetch(`/api/channel/${route.params.id}`)
+		const { server } = await $fetch(`/api/channels/${route.params.id}`)
 		if (!server) return;
 		useServerStore().addServer(server);
 		await useServerStore().setActive('servers', server.id)

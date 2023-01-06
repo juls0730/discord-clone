@@ -29,6 +29,27 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
+	if (channel.id && !channel.DM) {
+		const server = await prisma.server.findFirst({
+			where: {
+				id: channel.id
+			},
+			include: {
+				participants: true
+			}
+		})
+
+
+		const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
+
+		if (!userInServer) {
+			event.node.res.statusCode = 401;
+			return {
+				message: `You mus be in the server to access a channel in that server`
+			}
+		}
+	}
+
 	return {
 		channel
 	}

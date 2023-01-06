@@ -30,9 +30,17 @@ export default defineEventHandler(async (event) => {
 		}
 	})
 
-	const preExistingServer = await prisma.server.findFirst({
+	if (!partner) {
+		event.node.res.statusCode = 400;
+		return {
+			message: 'No partner found'
+		}
+	}
+
+	const preExistingServer = await prisma.channel.findFirst({
 		where: {
-			name: `${user.username} and ${partner.username}`
+			name: `${user.id}-${partner.id}`,
+			DM: true
 		}
 	})
 
@@ -43,21 +51,14 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	const server = await prisma.server.create({
+	const server = await prisma.channel.create({
 		data: {
-			name: `${user.username} and ${partner.username}`,
-			participants: { connect: [{ id: event.context.user.id }, { id: partner.id }] },
-			channels: {
-				create: [
-					{
-						name: 'default',
-					},
-				]
-			}
+			name: `${user.username}-${partner.username}`,
+			dmParticipants: { connect: [{ id: event.context.user.id }, { id: partner.id }] },
+			DM: true
 		},
 		include: {
-			channels: true,
-			participants: true
+			dmParticipants: true
 		}
 	})
 

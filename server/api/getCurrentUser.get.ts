@@ -2,7 +2,7 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
-	if (event.context.user === undefined || event.context.user.id === undefined) {
+	if (!event.context.user.authenticated) {
 		// event.node.res.statusCode = 401;
 		return {
 			message: "Unauthenticated"
@@ -12,6 +12,9 @@ export default defineEventHandler(async (event) => {
 	const user = await prisma.user.findFirst({
 		where: {
 			id: event.context.user.id
+		},
+		include: {
+			channels: true
 		}
 	})
 

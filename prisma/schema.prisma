@@ -16,8 +16,7 @@ model User {
   serverId     String?
   messages     Message[]
   session      Session[]
-  Channel      Channel?  @relation(fields: [channelId], references: [id])
-  channelId    String?
+  channels     Channel[]
 }
 
 model Server {

@@ -1,6 +1,10 @@
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
+declare global {
+	var io: Server | undefined
+}
+
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
 		event.node.res.statusCode = 401;
@@ -26,8 +30,6 @@ export default defineEventHandler(async (event) => {
 			dmParticipants: true
 		}
 	})
-
-	console.log(channel)
 
 	if (!channel.DM) {
 		const server = await prisma.server.findFirst({
@@ -78,8 +80,13 @@ export default defineEventHandler(async (event) => {
 					id: channelId
 				}
 			}
+		},
+		include: {
+			creator: true
 		}
 	})
+
+	global.io.emit(`message-${channel.id}`, { message });
 
 	return {
 		message

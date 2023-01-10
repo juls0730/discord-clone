@@ -6,7 +6,7 @@ export const useServerStore = defineStore('server', {
   }),
   actions: {
     addServer(server) {
-      if (this.servers.includes(server)) return;
+      if (this.servers.find((e) => e.id === server.id)) return;
       this.servers.push(server)
     },
     addDM(server) {
@@ -14,6 +14,10 @@ export const useServerStore = defineStore('server', {
       this.dms.push(server)
     },
     setActive(type, serverId) {
+      if (serverId === '@me') {
+        this.activeServer = {}
+        return;
+      }
       this.activeServer = this[type].find((e) => e.id === serverId)
     },
   },

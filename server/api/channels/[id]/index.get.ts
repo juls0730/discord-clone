@@ -2,8 +2,10 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
-	if (!event.context.user.authenticated) return {
-		message: 'You must be logged in to view a channel.'
+	if (!event.context.user.authenticated) {
+		return {
+			message: 'You must be logged in to view a channel.'
+		}
 	}
 
 	if (!event.context.params.id) {
@@ -19,6 +21,7 @@ export default defineEventHandler(async (event) => {
 		},
 		include: {
 			messages: true,
+			dmParticipants: true
 		}
 	})
 
@@ -45,7 +48,7 @@ export default defineEventHandler(async (event) => {
 		if (!userInServer) {
 			event.node.res.statusCode = 401;
 			return {
-				message: `You mus be in the server to access a channel in that server`
+				message: `You must be in the server to access a channel in that server`
 			}
 		}
 	}

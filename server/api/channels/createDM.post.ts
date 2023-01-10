@@ -53,7 +53,7 @@ export default defineEventHandler(async (event) => {
 
 	const server = await prisma.channel.create({
 		data: {
-			name: `${user.username}-${partner.username}`,
+			name: `${user.id}-${partner.id}`,
 			dmParticipants: { connect: [{ id: event.context.user.id }, { id: partner.id }] },
 			DM: true
 		},

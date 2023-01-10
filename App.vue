@@ -20,9 +20,9 @@ import { useServerStore } from './stores/servers'
 export default {
 	data() {
 		return {
-			servers: useServerStore().servers,
+			servers: storeToRefs(useServerStore()).servers,
 			activeServer: storeToRefs(useServerStore()).activeServer,
-			user: useUserStore().user
+			user: storeToRefs(useUserStore()).user
 		}
 	},
 	async setup() {

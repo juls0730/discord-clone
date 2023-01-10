@@ -1,45 +1,48 @@
 <template>
-	<nav class="p-4 bg-[hsl(216,calc(1*7.2%),13.5%)] grid grid-cols-1 grid-rows-[56px_1fr_56px] h-screen min-w-[88px] text-white relative">
+	<nav
+		class="p-4 bg-[hsl(216,calc(1*7.2%),13.5%)] grid grid-cols-1 grid-rows-[56px_1fr_56px] h-screen min-w-[88px] text-white relative">
 		<div>
-			<div
-			@click="openServer('@me', 'dms')"
-				class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300">
-				<svg width="32"
-					height="32"
-					viewBox="0 0 24 24">
-					<path fill="none"
-						stroke="currentColor"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M12 12c2-2.96 0-7-1-8c0 3.038-1.773 4.741-3 6c-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5c-1.786 3-2.791 3-4 2z" />
-				</svg>
-			</div>
+			<nuxt-link to="/channel/@me">
+				<div @click="openServer('@me', 'dms')"
+					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300">
+					<svg width="32"
+						height="32"
+						viewBox="0 0 24 24">
+						<path fill="none"
+							stroke="currentColor"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 12c2-2.96 0-7-1-8c0 3.038-1.773 4.741-3 6c-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5c-1.786 3-2.791 3-4 2z" />
+					</svg>
+				</div>
+			</nuxt-link>
 		</div>
 		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
-			<div v-for="server in servers"
-				:key="server.id"
-				@click="openServer(server.id, 'servers')"
-				class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
-				<svg width="32"
-					height="32"
-					viewBox="0 0 256 154">
-					<defs>
-						<linearGradient id="svgIDa"
-							x1="-2.778%"
-							x2="100%"
-							y1="32%"
-							y2="67.556%">
-							<stop offset="0%"
-								stop-color="#2298BD" />
-							<stop offset="100%"
-								stop-color="#0ED7B5" />
-						</linearGradient>
-					</defs>
-					<path fill="url(#svgIDa)"
-						d="M128 0C93.867 0 72.533 17.067 64 51.2C76.8 34.133 91.733 27.733 108.8 32c9.737 2.434 16.697 9.499 24.401 17.318C145.751 62.057 160.275 76.8 192 76.8c34.133 0 55.467-17.067 64-51.2c-12.8 17.067-27.733 23.467-44.8 19.2c-9.737-2.434-16.697-9.499-24.401-17.318C174.249 14.743 159.725 0 128 0ZM64 76.8C29.867 76.8 8.533 93.867 0 128c12.8-17.067 27.733-23.467 44.8-19.2c9.737 2.434 16.697 9.499 24.401 17.318C81.751 138.857 96.275 153.6 128 153.6c34.133 0 55.467-17.067 64-51.2c-12.8 17.067-27.733 23.467-44.8 19.2c-9.737-2.434-16.697-9.499-24.401-17.318C110.249 91.543 95.725 76.8 64 76.8Z" />
-				</svg>
-			</div>
+			<nuxt-link v-for="server in servers" :to="'/channel/' + server.id">
+				<div :key="server.id"
+					@click="openServer(server.id, 'servers')"
+					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
+					<svg width="32"
+						height="32"
+						viewBox="0 0 256 154">
+						<defs>
+							<linearGradient id="svgIDa"
+								x1="-2.778%"
+								x2="100%"
+								y1="32%"
+								y2="67.556%">
+								<stop offset="0%"
+									stop-color="#2298BD" />
+								<stop offset="100%"
+									stop-color="#0ED7B5" />
+							</linearGradient>
+						</defs>
+						<path fill="url(#svgIDa)"
+							d="M128 0C93.867 0 72.533 17.067 64 51.2C76.8 34.133 91.733 27.733 108.8 32c9.737 2.434 16.697 9.499 24.401 17.318C145.751 62.057 160.275 76.8 192 76.8c34.133 0 55.467-17.067 64-51.2c-12.8 17.067-27.733 23.467-44.8 19.2c-9.737-2.434-16.697-9.499-24.401-17.318C174.249 14.743 159.725 0 128 0ZM64 76.8C29.867 76.8 8.533 93.867 0 128c12.8-17.067 27.733-23.467 44.8-19.2c9.737 2.434 16.697 9.499 24.401 17.318C81.751 138.857 96.275 153.6 128 153.6c34.133 0 55.467-17.067 64-51.2c-12.8 17.067-27.733 23.467-44.8 19.2c-9.737-2.434-16.697-9.499-24.401-17.318C110.249 91.543 95.725 76.8 64 76.8Z" />
+					</svg>
+				</div>
+			</nuxt-link>
 		</div>
 		<div>
 			<div @click="createServerModelOpen = true"
@@ -102,9 +105,7 @@ export default {
 			serverStore.addServer(server)
 		},
 		openServer(id: string, type: string): void {
-			const router = useRouter();
 			useServerStore().setActive(type, id)
-			router.push({ path: `/channel/${id}` });
 		}
 	},
 	props: ['servers']

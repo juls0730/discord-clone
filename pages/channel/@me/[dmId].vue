@@ -8,22 +8,12 @@
 				</div>
 				<div v-else
 					v-for="conversations in conversation">
-					<div v-if="conversations.userId == user.id"
-						class="message-container"
-						id="messages-container">
-						<div class="message-sender">
+					<div class="message-container">
+						<div>
 							<div class="message-sender-text">
-								<p class="message-sender-you">You</p>
-								<p>{{ conversations.body }}</p>
-							</div>
-						</div>
-					</div>
-					<div v-else
-						class="message-container">
-						<div class="message-sender">
-							<div class="message-sender-text">
-								<p class="message-sender">{{ conversations.userId }}</p>
-								<p>{{ conversations.body }}</p>
+								<p :class="(conversations.userId == user.id) ? 'message-sender-you' : 'message-sender'">
+									{{ conversations.userId }}</p>
+								<p class="break-words max-w-full">{{ conversations.body }}</p>
 							</div>
 						</div>
 					</div>
@@ -32,14 +22,12 @@
 		</div>
 		<div class="conversation-input w-[calc(100vw-88px-240px)]">
 			<form @submit.prevent="sendMessage"
+				@keydown.enter="sendMessage"
 				class="relative px-4 w-full">
-				<div
-					id="textbox"
+				<div id="textbox"
 					class="px-4 rounded-md w-full h-[44px] bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
-					<textarea
-						type="text"
+					<textarea type="text"
 						id="messageBox"
-						style="position: relative; outline: none; white-space: pre-wrap; overflow-wrap: break-word;"
 						class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed"
 						v-model="messageContent"
 						placeholder="Send a Message..." />
@@ -47,7 +35,8 @@
 						class="absolute -top-full -left-full invisible"
 						id="submit">
 					<label for="submit"
-						class="py-1 px-1.5 h-fit my-auto"><svg width="32"
+						class="py-1 px-1.5 h-fit my-auto cursor-pointer"
+						role="button"><svg width="32"
 							height="32"
 							viewBox="0 0 24 24">
 							<path fill="none"
@@ -65,6 +54,7 @@
 
 <script lang="ts">
 import { useServerStore } from '~/stores/servers'
+import { io } from 'socket.io-client'
 
 export default {
 	data() {
@@ -80,12 +70,42 @@ export default {
 		useServerStore().addDM(server);
 		await useServerStore().setActive('dms', server.id);
 
-		const conversation: Array<Record<string, unknown>> = server.messages
+		const conversation: Array<Record<string, unknown>> = ref(server.messages)
 
 		return {
 			server,
-			conversation
+			conversation,
 		}
+	},
+	mounted() {
+		const route = useRoute()
+		const socket = io();
+
+		const conversationDiv = document.getElementById('conversation-pane');
+		if (!conversationDiv) throw new Error('wtf');
+		setTimeout(() => {
+			conversationDiv.scrollTop = conversationDiv.scrollHeight;
+		})
+
+		socket.on('connect', () => {
+			// listen for messages from the server
+			socket.on(`message-${route.params.dmId}`, (ev) => {
+				const { message } = ev
+				console.log(message.userId, this.user.id, message, this.conversation)
+				if (message.userId == this.user.id) return;
+
+				this.conversation.push(message)
+
+				const lastElementChild = conversationDiv.children[0]?.lastElementChild
+				if (!lastElementChild) return;
+
+				setTimeout(() => {
+					console.log(conversationDiv.scrollTop, conversationDiv.scrollHeight, conversationDiv.clientHeight, lastElementChild.clientHeight, (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight)
+					if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
+					conversationDiv.scrollTop = conversationDiv.scrollHeight;
+				})
+			})
+		});
 	},
 	async updated() {
 		if (!useServerStore().activeServer == this.server) await useServerStore().setActive('dms', this.server.id)
@@ -99,6 +119,11 @@ export default {
 
 			this.conversation.push(message)
 			this.messageContent = '';
+			const conversationDiv = document.getElementById('conversation-pane');
+			if (!conversationDiv) throw new Error('wtf');
+			setTimeout(() => {
+				conversationDiv.scrollTop = conversationDiv.scrollHeight;
+			})
 		},
 		// resizeTextarea() {
 		// 	const textArea = document.getElementById('messageBox')

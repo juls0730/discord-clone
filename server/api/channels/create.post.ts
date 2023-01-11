@@ -1,3 +1,4 @@
+import { IServer } from '~/types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -22,7 +23,7 @@ export default defineEventHandler(async (event) => {
 		where: {
 			name: serverName
 		}
-	})
+	}) as IServer
 
 	if (preExistingServer) {
 		event.node.res.statusCode = 409;
@@ -47,9 +48,7 @@ export default defineEventHandler(async (event) => {
 			channels: true,
 			participants: true
 		}
-	})
+	}) as IServer
 
-	return {
-		server
-	}
+	return server
 })

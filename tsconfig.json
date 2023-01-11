@@ -25,15 +25,6 @@
         "./*"
       ]
     },
-    "types": [
-      "@nuxt/types",
-      "@types/node"
-    ]
   },
-  "exclude": [
-    "node_modules",
-    ".nuxt",
-    "dist"
-  ],
   "extends": "./.nuxt/tsconfig.json"
 }

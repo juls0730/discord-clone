@@ -1,3 +1,4 @@
+import { IUser } from '~/types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -16,9 +17,9 @@ export default defineEventHandler(async (event) => {
 		include: {
 			channels: true
 		}
-	})
+	}) as IUser
 
-	user.passwordhash = undefined;
+	servers.passwordhash = undefined;
 
-	return user
+	return servers
 })

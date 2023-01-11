@@ -20,8 +20,9 @@
 	</div>
 </template>
 
-<script>
+<script lang="ts">
 import { useGlobalStore } from '~/stores/store'
+import { IUser } from '~/types';
 
 definePageMeta({
 	layout: 'clean'
@@ -42,14 +43,14 @@ export default {
 					username: this.username,
 					password: this.password
 				}
-			})
+			}) as { userId: string; token: string; user: IUser; }
 
 			const userId = useCookie('userId')
 			userId.value = user.userId
 			const token = useCookie('sessionToken')
 			token.value = user.token
 
-			useGlobalStore().setUser(user)
+			useGlobalStore().setUser(user.user)
 
 			navigateTo('/channel/@me')
 		}

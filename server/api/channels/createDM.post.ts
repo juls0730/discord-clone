@@ -1,3 +1,4 @@
+import { IChannel, IUser } from '~/types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -22,13 +23,13 @@ export default defineEventHandler(async (event) => {
 		where: {
 			id: partnerId
 		}
-	})
+	}) as IUser
 
 	const user = await prisma.user.findFirst({
 		where: {
 			id: event.context.user.id
 		}
-	})
+	}) as IUser
 
 	if (!partner) {
 		event.node.res.statusCode = 400;
@@ -42,7 +43,7 @@ export default defineEventHandler(async (event) => {
 			name: `${user.id}-${partner.id}`,
 			DM: true
 		}
-	})
+	}) as IChannel
 
 	if (preExistingServer) {
 		event.node.res.statusCode = 409;
@@ -60,9 +61,7 @@ export default defineEventHandler(async (event) => {
 		include: {
 			dmParticipants: true
 		}
-	})
+	}) as IChannel
 
-	return {
-		server
-	}
+	return server
 })

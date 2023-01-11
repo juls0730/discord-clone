@@ -1,3 +1,4 @@
+import { IChannel, IServer, IUser } from '../../../../types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -23,7 +24,7 @@ export default defineEventHandler(async (event) => {
 			messages: true,
 			dmParticipants: true
 		}
-	})
+	}) as IChannel
 
 	if (!channel) {
 		event.node.res.statusCode = 404;
@@ -40,9 +41,9 @@ export default defineEventHandler(async (event) => {
 			include: {
 				participants: true
 			}
-		})
+		}) as IServer
 
-		const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
+		const userInServer: Array<IUser> = server.participants.filter((e: IUser) => e.id === event.context.user.id)
 
 		if (!userInServer) {
 			event.node.res.statusCode = 401;
@@ -52,7 +53,5 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	return {
-		channel
-	}
+	return channel
 })

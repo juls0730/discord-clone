@@ -1,8 +1,10 @@
+import { IChannel, IServer, IUser, IMessage } from '~/types'
+import { Server } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 declare global {
-	var io: Server | undefined
+	var io: Server
 }
 
 export default defineEventHandler(async (event) => {
@@ -29,7 +31,7 @@ export default defineEventHandler(async (event) => {
 		include: {
 			dmParticipants: true
 		}
-	})
+	}) as IChannel
 
 	if (!channel.DM) {
 		const server = await prisma.server.findFirst({
@@ -39,11 +41,11 @@ export default defineEventHandler(async (event) => {
 			include: {
 				participants: true
 			}
-		})
+		}) as IServer
 
-		const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
+		const userInServer: Array<IUser> = server.participants.filter((e) => e.id === event.context.user.id)
 
-		if (!userInServer.length > 0) {
+		if (userInServer.length > 0) {
 			event.node.res.statusCode = 401;
 			return {
 				message: 'You must be in the server to send a message.'
@@ -57,9 +59,9 @@ export default defineEventHandler(async (event) => {
 			}
 		}
 	} else {
-		const userInDM = channel.dmParticipants.filter((e) => e.id === event.context.user.id)
+		const userInDM: Array<IUser> | undefined = channel.dmParticipants?.filter((e) => e.id === event.context.user.id)
 
-		if (!userInDM.length > 0) {
+		if (!userInDM || userInDM.length > 0) {
 			event.node.res.statusCode = 401;
 			return {
 				message: 'You must be in the DM to send a message.'
@@ -84,7 +86,7 @@ export default defineEventHandler(async (event) => {
 		include: {
 			creator: true
 		}
-	})
+	}) as IMessage
 
 	global.io.emit(`message-${channel.id}`, { message });
 

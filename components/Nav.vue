@@ -88,6 +88,7 @@
 
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store'
+import { IServer } from '~/types';
 
 export default {
 	data() {
@@ -99,7 +100,7 @@ export default {
 	methods: {
 		async createServer() {
 			const globalStore = useGlobalStore();
-			const { server } = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName } })
+			const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName } })
 			this.createServerModelOpen = false;
 			this.serverName = '';
 			globalStore.addServer(server)

@@ -5,8 +5,9 @@
 	</form>
 </template>
 
-<script>
+<script lang="ts">
 import { useGlobalStore } from '~/stores/store'
+import { IChannel } from '~/types'
 
 definePageMeta({  
   middleware: 'auth'
@@ -20,7 +21,7 @@ export default {
 	},
 	methods: {
 		async startDM() {
-			const { server } = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId } })
+			const server: IChannel = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId } }) 
 
 			useGlobalStore().addDM(server)
 			useRouter().push({ path: '/channel/@me/' + server.id })

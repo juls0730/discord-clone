@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client'
+import { IUser } from '../../types'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -45,7 +46,7 @@ export default defineEventHandler(async (event) => {
 				},
 			},
 		}
-	})
+	}) as IUser
 
 	user.passwordhash = undefined;
 

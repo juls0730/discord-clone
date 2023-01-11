@@ -1,6 +1,7 @@
 import bcryptjs from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from '@prisma/client'
+import { IUser } from "../../types";
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -17,7 +18,7 @@ export default defineEventHandler(async (event) => {
 		where: {
 			username: body.username
 		}
-	})
+	}) as IUser
 
 	const isCorrect = await bcryptjs.compare(body.password, user.passwordhash)
 
@@ -39,6 +40,7 @@ export default defineEventHandler(async (event) => {
 
 	return {
 		token,
-		userId: user.id
+		userId: user.id,
+		user
 	}
 })

@@ -7,7 +7,7 @@
 					:to="'/channel/@me/' + dm.id">
 					<div
 						class="mx-2 my-4 hover:bg-[hsl(223,calc(1*6.9%),25.8%)] px-2 py-2 w-[calc(240px-1rem)] max-h-10 h-10 overflow-ellipsis rounded-md transition-colors">
-						{{ (dm.name).split('-').filter((e: string) => e !== user.id)[0] }}
+						{{ (dm.name).split('-').find((e: string) => e !== user.id) }}
 					</div>
 				</nuxt-link>
 			</div>

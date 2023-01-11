@@ -10,11 +10,11 @@ export const useGlobalStore = defineStore('global', {
 			this.user = user;
 		},
 		addServer(server: IServer) {
-			if (this.user.servers.find((e) => e.id === server.id)) return;
+			if (!this.user.servers || this.user.servers.find((e) => e.id === server.id)) return;
 			this.user.servers.push(server)
 		},
 		addDM(dmChannel: IChannel) {
-			if (this.user.channels.includes(dmChannel)) return;
+			if (!this.user.channels || this.user.channels.find((e) => e.id === dmChannel.id)) return;
 			this.user.channels.push(dmChannel)
 		},
 		setActive(type: string, serverId: string) {
@@ -22,6 +22,7 @@ export const useGlobalStore = defineStore('global', {
 				this.activeServer = {}
 				return;
 			}
+			if (!this.user.channels || !this.user.servers) return;
 
 			type = (type === 'dm') ? 'channels' : 'servers'
 

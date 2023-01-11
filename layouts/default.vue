@@ -1,5 +1,5 @@
 <template>
-	<div class="flex h-screen max-h-screen text-white">
+	<div v-if="user.id" class="flex h-screen max-h-screen text-white">
 		<Nav :user="user"/>
 		<Sidebar :server="activeServer"
 			:user="user" />
@@ -10,7 +10,9 @@
 </template>
   
 <script lang="ts">
+import { Nav, Sidebar } from '~/.nuxt/components'
 import { useGlobalStore } from '~/stores/store'
+import { IUser } from '~/types'
 
 export default {
 	data() {
@@ -24,7 +26,7 @@ export default {
 		const userStore = useGlobalStore()
 		const sessionToken = useCookie('sessionToken')
 		if (userStore.user.id === undefined && sessionToken.value) {
-			const user = await $fetch('/api/getCurrentUser')
+			const user: IUser = await $fetch('/api/getCurrentUser')
 
 			if (!user) return;
 

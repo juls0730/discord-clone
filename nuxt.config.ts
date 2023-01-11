@@ -1,7 +1,7 @@
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 
 export default {
-    ssr: false,
+    ssr: true,
     app: {
         head: {
             meta: [

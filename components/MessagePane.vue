@@ -52,10 +52,6 @@
 	</div>
 </template>
 
-<script async setup lang="ts">
-
-</script>
-
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store';
 import { io } from 'socket.io-client'

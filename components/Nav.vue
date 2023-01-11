@@ -19,7 +19,7 @@
 			</nuxt-link>
 		</div>
 		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
-			<nuxt-link v-for="server in servers" :to="'/channel/' + server.id">
+			<nuxt-link v-for="server in user.servers" :to="'/channel/' + server.channels[0].id">
 				<div :key="server.id"
 					@click="openServer(server.id, 'servers')"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
@@ -87,7 +87,7 @@
 </template>
 
 <script lang="ts">
-import { useServerStore } from '~/stores/servers'
+import { useGlobalStore } from '~/stores/store'
 
 export default {
 	data() {
@@ -98,16 +98,16 @@ export default {
 	},
 	methods: {
 		async createServer() {
-			const serverStore = useServerStore();
+			const globalStore = useGlobalStore();
 			const { server } = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName } })
 			this.createServerModelOpen = false;
 			this.serverName = '';
-			serverStore.addServer(server)
+			globalStore.addServer(server)
 		},
 		openServer(id: string, type: string): void {
-			useServerStore().setActive(type, id)
+			useGlobalStore().setActive(type, id)
 		}
 	},
-	props: ['servers']
+	props: ['user']
 }
 </script>

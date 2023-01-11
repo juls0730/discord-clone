@@ -32,16 +32,15 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	if (channel.id && !channel.DM) {
+	if (channel.serverId && !channel.DM) {
 		const server = await prisma.server.findFirst({
 			where: {
-				id: channel.id
+				id: channel.serverId
 			},
 			include: {
 				participants: true
 			}
 		})
-
 
 		const userInServer = server.participants.filter((e) => e.id === event.context.user.id)
 

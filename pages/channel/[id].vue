@@ -1,25 +1,37 @@
 <template>
-	{{ $route.params.id }}
+	<MessagePane :server="server" />
 </template>
 
 <script lang="ts">
-import { useServerStore } from '~/stores/servers'
+import { useGlobalStore } from '~/stores/store'
+
+definePageMeta({
+	middleware: 'auth'
+})
 
 export default {
 	async setup() {
 		const route = useRoute()
 
-		const { server } = await $fetch(`/api/guilds/${route.params.id}`)
+		const { channel: server } = await $fetch(`/api/channels/${route.params.id}`)
 		if (!server) return;
-		useServerStore().addServer(server);
-		await useServerStore().setActive('servers', server.id)
+
+		const realServer = await useGlobalStore().user.servers.find((e) => e.channels.some((el) => el.id == route.params.id ) )
+
+		useGlobalStore().addServer(realServer);
+		await useGlobalStore().setActive('servers', realServer.id)
+
+
 		return {
 			server
 		}
 	},
 	async updated() {
 		if (!this.server) return;
-		if (!await useServerStore().activeServer == this.server.id) await useServerStore().setActive('servers', this.server.id)
+
+		this.server = await $fetch(`/api/channels/${route.params.id}`);
+
+		if (!await useGlobalStore().activeServer == this.server.id) await useGlobalStore().setActive('servers', this.server.id)
 	}
 }
 </script>

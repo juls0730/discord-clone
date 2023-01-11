@@ -6,7 +6,11 @@
 </template>
 
 <script>
-import { useServerStore } from '~/stores/servers'
+import { useGlobalStore } from '~/stores/store'
+
+definePageMeta({  
+  middleware: 'auth'
+})
 
 export default {
 	data() {
@@ -18,7 +22,7 @@ export default {
 		async startDM() {
 			const { server } = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId } })
 
-			useServerStore().addDM(server)
+			useGlobalStore().addDM(server)
 			useRouter().push({ path: '/channel/@me/' + server.id })
 		}
 	}

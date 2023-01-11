@@ -12,7 +12,7 @@ model User {
   email        String    @unique
   username     String    @unique
   passwordhash String
-  server       Server[]
+  servers      Server[]
   serverId     String?
   messages     Message[]
   session      Session[]

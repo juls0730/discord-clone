@@ -7,13 +7,13 @@
 					<p>No messages yet</p>
 				</div>
 				<div v-else
-					v-for="conversations in conversation">
+					v-for="message in conversation">
 					<div class="message-container">
 						<div>
 							<div class="message-sender-text">
-								<p :class="(conversations.userId == user.id) ? 'message-sender-you' : 'message-sender'">
-									{{ conversations.userId }}</p>
-								<p class="break-words max-w-full">{{ conversations.body }}</p>
+								<p :class="(message.userId == user.id) ? 'message-sender-you' : 'message-sender'">
+									{{ message.userId }}</p>
+								<p class="break-words max-w-full">{{ message.body }}</p>
 							</div>
 						</div>
 					</div>
@@ -52,29 +52,21 @@
 	</div>
 </template>
 
+<script async setup lang="ts">
+
+</script>
+
 <script lang="ts">
-import { useServerStore } from '~/stores/servers'
+import { useGlobalStore } from '~/stores/store';
 import { io } from 'socket.io-client'
 
 export default {
+	props: ['server'],
 	data() {
 		return {
-			messageContent: ''
-		}
-	},
-	async setup() {
-		const route = useRoute()
-
-		const { channel: server } = await $fetch(`/api/channels/${route.params.dmId}`)
-		if (!server) return;
-		useServerStore().addDM(server);
-		await useServerStore().setActive('dms', server.id);
-
-		const conversation: Array<Record<string, unknown>> = ref(server.messages)
-
-		return {
-			server,
-			conversation,
+			user: useGlobalStore().user,
+			messageContent: '',
+			conversation: this.server.messages
 		}
 	},
 	mounted() {
@@ -89,7 +81,7 @@ export default {
 
 		socket.on('connect', () => {
 			// listen for messages from the server
-			socket.on(`message-${route.params.dmId}`, (ev) => {
+			socket.on(`message-${route.params.id}`, (ev) => {
 				const { message } = ev
 				console.log(message.userId, this.user.id, message, this.conversation)
 				if (message.userId == this.user.id) return;
@@ -107,15 +99,12 @@ export default {
 			})
 		});
 	},
-	async updated() {
-		if (!useServerStore().activeServer == this.server) await useServerStore().setActive('dms', this.server.id)
-	},
 	methods: {
 		async sendMessage() {
 			const route = useRoute()
 			if (!this.messageContent) return;
 
-			const { message } = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.dmId } })
+			const { message } = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
 
 			this.conversation.push(message)
 			this.messageContent = '';
@@ -137,7 +126,6 @@ export default {
 		// 	console.log('a')
 		// }
 	},
-	props: ['user']
 }
 </script>
 

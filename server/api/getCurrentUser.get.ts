@@ -13,8 +13,37 @@ export default defineEventHandler(async (event) => {
 		where: {
 			id: event.context.user.id
 		},
-		include: {
-			channels: true
+		select: {
+			id: true,
+			username: true,
+			channels: {
+				select: {
+					id: true,
+					name: true,
+					messages: false,
+					DM: true,
+					dmParticipants: true
+				}
+			},
+			servers: {
+				select: {
+					id: true,
+					name: true,
+					channels: {
+						select: {
+							id: true,
+							DM: true,
+							name: true
+						}
+					},
+					participants: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
+				},
+			},
 		}
 	})
 

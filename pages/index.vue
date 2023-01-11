@@ -5,3 +5,9 @@
     <nuxt-link to="/signup">Signup</nuxt-link>
   </div>
 </template>
+
+<script setup>
+definePageMeta({  
+  middleware: 'auth'
+})
+</script>

@@ -113,14 +113,20 @@ export default defineEventHandler(async (event) => {
 			invites: {
 				select: {
 					id: true,
-					server: true,
 					expires: true,
 					expiryDate: true,
-					maxUses: true
+					maxUses: true,
+					server: {
+						select: {
+							id: true,
+							name: true,
+							participants: true
+						}
+					}
 				}
 			}
 		}
-	}) as IMessage
+	}) as unknown as IMessage
 
 
 	global.io.emit(`message-${channel.id}`, { message });

@@ -2,9 +2,8 @@
 	<Suspense>
 		<div v-if="user.id"
 			class="flex h-screen max-h-screen text-white">
-			<Nav :user="user" />
-			<Sidebar :server="activeServer"
-				:user="user" />
+			<Nav />
+			<Sidebar />
 			<div class="w-[calc(100vw-88px-240px)] h-full">
 				<slot />
 			</div>
@@ -38,6 +37,10 @@ export default {
 			if (!user) return;
 
 			userStore.setUser(user)
+			const { channels: dms, servers } = await $fetch('/api/user/getServers')
+
+			useGlobalStore().servers = servers
+			useGlobalStore().dms = dms
 		}
 	}
 }

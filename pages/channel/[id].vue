@@ -7,7 +7,7 @@ const route = useRoute()
 
 const server: IChannel = await $fetch(`/api/channels/${route.params.id}`)
 
-const realServer = useGlobalStore().user.servers?.filter((e) => e.channels.some((el) => el.id == route.params.id))[0]
+const realServer = useGlobalStore().servers?.filter((e) => e.channels.some((el) => el.id == route.params.id))[0]
 
 if (realServer) {
 	useGlobalStore().addServer(realServer);

@@ -19,7 +19,7 @@
 			</nuxt-link>
 		</div>
 		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
-			<nuxt-link v-for="server in user.servers" :to="'/channel/' + server.channels[0].id">
+			<nuxt-link v-for="server in servers" :to="'/channel/' + server.channels[0].id">
 				<div :key="server.id"
 					@click="openServer(server.id, 'servers')"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
@@ -93,6 +93,7 @@ import { IServer } from '~/types';
 export default {
 	data() {
 		return {
+			servers: storeToRefs(useGlobalStore()).servers,
 			createServerModelOpen: false,
 			serverName: ''
 		}
@@ -109,6 +110,5 @@ export default {
 			useGlobalStore().setActive(type, id)
 		}
 	},
-	props: ['user']
 }
 </script>

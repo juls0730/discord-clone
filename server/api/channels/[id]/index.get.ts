@@ -44,7 +44,8 @@ export default defineEventHandler(async (event) => {
 							server: {
 								select: {
 									id: true,
-									name: true
+									name: true,
+									participants: true
 								}
 							}
 						}

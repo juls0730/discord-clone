@@ -3,7 +3,7 @@
 		class="bg-[hsl(223,calc(1*6.9%),19.8%)] min-w-60 w-60 h-screen shadow-sm text-white select-none grid grid-rows-[93.5%_1fr]">
 		<div v-if="!server.id || server.DM == true">
 			<div>
-				<nuxt-link v-for="dm in user.channels"
+				<nuxt-link v-for="dm in dms"
 					:to="'/channel/@me/' + dm.id">
 					<div
 						class="mx-2 my-4 hover:bg-[hsl(223,calc(1*6.9%),25.8%)] px-2 py-2 w-[calc(240px-1rem)] max-h-10 h-10 overflow-ellipsis rounded-md transition-colors">
@@ -17,7 +17,7 @@
 			<div class="flex p-4 border-b border-zinc-600/80">
 				<h4 class="text-lg font-semibold grid gap-1 grid-cols-[1fr_28px] w-full">
 					<span>{{ server.name }}</span>
-					<button class="cursor-pointer p-1 hover:backdrop-brightness-110 transition-all">
+					<button class="cursor-pointer p-1 bg-[hsl(223,calc(1*6.9%),19.8%)] hover:bg-[hsl(223,calc(1*6.9%),26.4%)] transition-all">
 						<span class="h-fit w-[20px]">
 							<svg xmlns="http://www.w3.org/2000/svg"
 								width="20"
@@ -36,9 +36,9 @@
 			</div>
 			<div class="flex gap-y-1.5 px-1.5 mt-2 flex-col">
 				<button @click="createInvite"
-					v-if="userIsOwnerOrAdmin">make invite</button>
+					v-if="userIsOwner || userIsAdmin">make invite</button>
 				<button
-					class="flex text-center hover:bg-zinc-600/70 px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm gap-1/5 cursor-pointer"
+					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm gap-1/5 cursor-pointer"
 					v-for="channel in server.channels"
 					@click="openChannel(channel.id)"
 					:key="channel.id">
@@ -57,9 +57,9 @@
 					</span>
 					<span>{{ channel.name }}</span>
 				</button>
-				<button v-if="userIsOwnerOrAdmin"
+				<button v-if="userIsOwner || userIsAdmin"
 					@click="openCreateChannelModel"
-					class="flex text-center hover:bg-zinc-600/70 px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer">
+					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer">
 					<span>
 						<svg xmlns="http://www.w3.org/2000/svg"
 							width="20"
@@ -132,34 +132,42 @@
 </template>
 
 <script lang="ts">
-import { IRole, IServer } from '~/types';
+import { useGlobalStore } from '~/stores/store';
+import { IChannel, IRole, IServer } from '~/types';
 
 export default {
 	data() {
 		return {
+			server: storeToRefs(useGlobalStore()).activeServer,
+			user: storeToRefs(useGlobalStore()).user,
+			dms: storeToRefs(useGlobalStore()).dms,
 			createChannelModelOpen: false,
 			channelName: '',
-			userIsOwnerOrAdmin: false
+			userIsOwner: false,
+			userIsAdmin: false,
 		}
 	},
-	mounted() {
-		setTimeout(() => {
-			if (!this.server.roles) {
-				console.log(this.server)
-				throw new Error('server must be null');
-			}
-			this.userIsOwnerOrAdmin = this.server.roles.find((e: IRole) => e.users.some((el) => el.id === this.user.id)).owner ||
-				this.server.roles.find((e: IRole) => e.users.some((el) => el.id === this.user.id)).administrator
-		})
+	async mounted() {
+		const that = this;
+		var interval = setInterval(function () {
+			// get elem
+			if (typeof that.server.roles == 'undefined') return;
+			clearInterval(interval);
+
+			that.userIsOwner = that.server.roles?.find((e: IRole) => e.users.some((el) => el.id === that.user.id))?.owner || false
+			that.userIsAdmin = that.server.roles?.find((e: IRole) => e.users.some((el) => el.id === that.user.id))?.administer || false
+		}, 10);
 	},
 	methods: {
 		openCreateChannelModel() {
 			this.createChannelModelOpen = true;
 		},
 		async createChannel() {
-			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName } })
+			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName } }) as IChannel
 
-			this.server.channels.push(channel)
+			if (!channel) return;
+
+			this.server.channels?.push(channel)
 			this.createChannelModelOpen = false;
 		},
 		openChannel(id: string) {
@@ -171,6 +179,5 @@ export default {
 			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST' })
 		},
 	},
-	props: ['server', 'user']
 }
 </script>

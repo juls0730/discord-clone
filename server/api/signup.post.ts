@@ -41,8 +41,57 @@ export default defineEventHandler(async (event) => {
 			username: body.username,
 			passwordhash,
 			email: body.email
-		}
-	}) as SafeUser
+		},
+		select: {
+			id: true,
+			username: true,
+			passwordhash: true,
+			email: true,
+			channels: {
+				select: {
+					id: true,
+					name: true,
+					messages: false,
+					DM: true,
+					dmParticipants: true,
+					serverId: true
+				}
+			},
+			servers: {
+				select: {
+					id: true,
+					name: true,
+					channels: {
+						select: {
+							id: true,
+							DM: true,
+							name: true,
+							serverId: true
+						}
+					},
+					participants: {
+						select: {
+							id: true,
+							username: true
+						}
+					},
+					roles: {
+						select: {
+							id: true,
+							name: true,
+							administrator: true,
+							owner: true,
+							users: {
+								select: {
+									id: true
+								}
+							}
+						}
+					}
+				},
+			}
+		},
+	}) as unknown
 
 	const token = uuidv4()
 

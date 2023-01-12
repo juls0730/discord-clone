@@ -14,7 +14,7 @@ export interface IServer {
 	id: string;
 	name: string;
 	channels?: Array<IChannel>;
-	participants: Array<IUser>;
+	participants: Array<SafeUser>;
 	roles?: Array<IRole>;
 	inviteCode?: Array<IInviteCode>;
 }
@@ -25,7 +25,7 @@ export interface IChannel {
 	server?: IServer;
 	messages?: Array<IMessage>
 	DM: boolean;
-	dmParticipants?: Array<IUser>;
+	dmParticipants?: Array<SafeUser>;
 	serverId: string;
 }
 

@@ -19,11 +19,25 @@
 							<div>
 								<div v-for="invite in message.invites">
 									<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] p-4 rounded-md shadow-md mr-2">
-										<p class="text-sm font-semibold">You've been invited</p>
+										<p class="text-sm font-semibold text-zinc-100">You've been invited to join a
+											server</p>
 										<span class="text-xl font-bold capitalize">{{ invite.server.name }}</span>
+										<div class="flex items-center">
+											<span
+												class="before:bg-[hsl(214,9.9%,50.4%)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"></span>
+											<span>{{ invite.server.participants.length }} Members</span>
+										</div>
 										<div class="flex w-full justify-end">
 											<button @click="joinServer(invite)"
-												class="font-semibold rounded px-4 py-2 bg-green-700 hover:bg-green-600 transition-colors">Join</button>
+												class="font-semibold rounded px-4 py-2 transition-colors"
+												:class="(invite.server.participants.find((e) => e.id === user.id)) ? 'bg-green-800 cursor-not-allowed' : 'bg-green-700 hover:bg-green-600'">
+											<span v-if="invite.server.participants.find((e) => e.id === user.id)">
+												Joined
+											</span>
+											<span v-else>
+												Join
+											</span>
+											</button>
 										</div>
 									</div>
 								</div>
@@ -77,7 +91,8 @@ export default {
 			user: storeToRefs(useGlobalStore()).user,
 			messageContent: '',
 			conversation: this.server.messages as IMessage[],
-			canSendNotifications: false
+			canSendNotifications: false,
+			servers: storeToRefs(useGlobalStore()).servers
 		}
 	},
 	mounted() {
@@ -146,7 +161,7 @@ export default {
 			const route = useRoute()
 			if (!this.messageContent) return;
 
-			const message: IChannel = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
+			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
 
 			if (!message) return;
 			if (this.conversation.includes(message)) return;
@@ -162,7 +177,7 @@ export default {
 		async joinServer(invite: IInviteCode) {
 			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id } })
 			if (!server) return;
-			this.user.servers?.push(server)
+			this.servers?.push(server)
 		},
 		scrollToBottom() {
 			const conversationDiv = document.getElementById('conversation-pane');

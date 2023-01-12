@@ -4,19 +4,21 @@ import { SafeUser, IServer, IChannel } from "../types";
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
 		activeServer: {} as IServer,
-		user: {} as SafeUser
+		user: {} as SafeUser,
+		dms: [] as IChannel[],
+		servers: [] as IServer[]
 	}),
 	actions: {
 		setUser(user: SafeUser) {
 			this.user = user;
 		},
 		addServer(server: IServer) {
-			if (!this.user.servers || this.user.servers.find((e) => e.id === server.id)) return;
-			this.user.servers.push(server)
+			if (!this.servers || this.servers.find((e) => e.id === server.id)) return;
+			this.servers.push(server)
 		},
 		addDM(dmChannel: IChannel) {
-			if (!this.user.channels || this.user.channels.find((e) => e.id === dmChannel.id)) return;
-			this.user.channels.push(dmChannel)
+			if (!this.channels || this.channels.find((e) => e.id === dmChannel.id)) return;
+			this.channels.push(dmChannel)
 		},
 		setActive(type: string, serverId: string) {
 			if (serverId === '@me') {
@@ -24,21 +26,11 @@ export const useGlobalStore = defineStore('global', {
 				return;
 			}
 			console.log(this.activeServer)
-			if (!this.user.channels || !this.user.servers) return;
 
-			type = (type === 'dm') ? 'channels' : 'servers'
-
-			if (type !== 'channels' && type !== 'servers') return;
-
-			const searchableArray: IChannel[] | IServer[] | undefined = this["user"][type]
+			const searchableArray: IChannel[] | IServer[] | undefined = this[type]
 			if (!searchableArray) return;
-			const activeServer = searchableArray.find((e: IServer | IChannel) => e.id === serverId)
-			console.log(searchableArray, this["user"], activeServer)
-
-			if (!activeServer) return;
-
-			this.activeServer = activeServer
-			console.log(this.activeServer)
+			this.activeServer = searchableArray.find((e: IServer | IChannel) => e.id === serverId)
+			console.log(this.activeServer, searchableArray.find((e: IServer | IChannel) => e.id === serverId))
 		},
 	},
 })

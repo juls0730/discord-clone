@@ -42,13 +42,25 @@ export default defineEventHandler(async (event) => {
 						name: 'general',
 					},
 				]
+			},
+			roles: {
+				create: [
+					{
+						name: 'owner',
+						owner: true,
+						users: {
+							connect: [{ id: event.context.user.id }]
+						}
+					},
+				]
 			}
 		},
 		include: {
 			channels: true,
-			participants: true
+			participants: true,
+			roles: true
 		}
-	}) as IServer
+	}) as IServer;
 
 	return server
 })

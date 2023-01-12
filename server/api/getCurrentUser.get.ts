@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client'
-import { IUser } from '../../types'
+import { SafeUser } from '../../types'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -42,13 +42,24 @@ export default defineEventHandler(async (event) => {
 							id: true,
 							username: true
 						}
+					},
+					roles: {
+						select: {
+							id: true,
+							name: true,
+							administrator: true,
+							owner: true,
+							users: {
+								select: {
+									id: true
+								}
+							}
+						}
 					}
 				},
 			},
 		}
-	}) as IUser
-
-	user.passwordhash = undefined;
+	}) as SafeUser | null;
 
 	return user
 })

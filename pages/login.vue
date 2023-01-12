@@ -22,7 +22,7 @@
 
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store'
-import { IUser } from '~/types';
+import { SafeUser } from '~/types';
 
 definePageMeta({
 	layout: 'clean'
@@ -43,7 +43,7 @@ export default {
 					username: this.username,
 					password: this.password
 				}
-			}) as { userId: string; token: string; user: IUser; }
+			}) as { userId: string; token: string; user: SafeUser; }
 
 			const userId = useCookie('userId')
 			userId.value = user.userId

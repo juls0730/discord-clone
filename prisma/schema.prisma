@@ -13,17 +13,29 @@ model User {
   username     String    @unique
   passwordhash String
   servers      Server[]
-  serverId     String?
   messages     Message[]
   session      Session[]
   channels     Channel[]
+  roles        Role[]
 }
 
 model Server {
-  id           String    @id @default(cuid())
+  id           String       @id @default(cuid())
   name         String
   participants User[]
   channels     Channel[]
+  roles        Role[]
+  InviteCode   InviteCode[]
+}
+
+model Role {
+  id            String  @id @default(cuid())
+  name          String
+  administrator Boolean @default(false)
+  owner         Boolean @default(false)
+  users         User[]
+  server        Server? @relation(fields: [serverId], references: [id])
+  serverId      String?
 }
 
 model Channel {
@@ -32,17 +44,29 @@ model Channel {
   server         Server?   @relation(fields: [serverId], references: [id])
   serverId       String?
   messages       Message[]
-  DM             Boolean?
+  DM             Boolean   @default(false)
   dmParticipants User[]
 }
 
 model Message {
-  id        String  @id @default(cuid())
+  id        String       @id @default(cuid())
   body      String
-  channel   Channel @relation(fields: [channelId], references: [id])
-  creator   User    @relation(fields: [userId], references: [id])
+  channel   Channel      @relation(fields: [channelId], references: [id])
+  creator   User         @relation(fields: [userId], references: [id])
   userId    String
   channelId String
+  invites   InviteCode[]
+}
+
+model InviteCode {
+  id         String    @id @default(cuid())
+  server     Server    @relation(fields: [serverId], references: [id])
+  expires    Boolean   @default(false)
+  expiryDate DateTime?
+  maxUses    Int       @default(0)
+  serverId   String
+  Message    Message?  @relation(fields: [messageId], references: [id])
+  messageId  String?
 }
 
 model Session {

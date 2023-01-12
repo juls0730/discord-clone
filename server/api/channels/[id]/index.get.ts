@@ -1,4 +1,4 @@
-import { IChannel, IServer, IUser } from '../../../../types'
+import { IChannel, IServer, SafeUser } from '../../../../types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -20,11 +20,47 @@ export default defineEventHandler(async (event) => {
 		where: {
 			id: event.context.params.id
 		},
-		include: {
-			messages: true,
-			dmParticipants: true
+		select: {
+			id: true,
+			name: true,
+			server: {
+				select: {
+					id: true
+				}
+			},
+			messages: {
+				select: {
+					id: true,
+					body: true,
+					creator: {
+						select: {
+							id: true,
+							username: true
+						}
+					},
+					invites: {
+						select: {
+							id: true, 
+							server: {
+								select: {
+									id: true,
+									name: true
+								}
+							}
+						}
+					}
+				}
+			},
+			DM: true,
+			dmParticipants: {
+				select: {
+					id: true,
+					username: true
+				}
+			},
+			serverId: true,
 		}
-	}) as IChannel
+	}) as IChannel | null;
 
 	if (!channel) {
 		event.node.res.statusCode = 404;
@@ -39,11 +75,12 @@ export default defineEventHandler(async (event) => {
 				id: channel.serverId
 			},
 			include: {
-				participants: true
+				participants: true,
+				roles: true
 			}
-		}) as IServer
+		}) as IServer | null;
 
-		const userInServer: Array<IUser> = server.participants.filter((e: IUser) => e.id === event.context.user.id)
+		const userInServer: Array<SafeUser> | undefined = server?.participants.filter((e: SafeUser) => e.id === event.context.user.id)
 
 		if (!userInServer) {
 			event.node.res.statusCode = 401;

@@ -3,7 +3,7 @@
 		<div class="w-full h-[calc(100%-60px)] overflow-y-scroll pb-1"
 			id="conversation-pane">
 			<div>
-				<div v-if="!conversation">
+				<div v-if="conversation.length === 0">
 					<p>No messages yet</p>
 				</div>
 				<div v-else
@@ -11,9 +11,22 @@
 					<div class="message-container">
 						<div>
 							<div class="message-sender-text">
-								<p :class="(message.userId == user.id) ? 'message-sender-you' : 'message-sender'">
-									{{ message.userId }}</p>
+								<p class="mb-1.5 font-semibold">
+									{{ message.creator.username }}
+								</p>
 								<p class="break-words max-w-full">{{ message.body }}</p>
+							</div>
+							<div>
+								<div v-for="invite in message.invites">
+									<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] p-4 rounded-md shadow-md mr-2">
+										<p class="text-sm font-semibold">You've been invited</p>
+										<span class="text-xl font-bold capitalize">{{ invite.server.name }}</span>
+										<div class="flex w-full justify-end">
+											<button @click="joinServer(invite)"
+												class="font-semibold rounded px-4 py-2 bg-green-700 hover:bg-green-600 transition-colors">Join</button>
+										</div>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -22,7 +35,7 @@
 		</div>
 		<div class="conversation-input w-[calc(100vw-88px-240px)]">
 			<form @submit.prevent="sendMessage"
-				@keydown.enter="sendMessage"
+				@keydown.enter.exact.prevent="sendMessage"
 				class="relative px-4 w-full">
 				<div id="textbox"
 					class="px-4 rounded-md w-full h-[44px] bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
@@ -55,52 +68,88 @@
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store';
 import { io } from 'socket.io-client'
+import { IChannel, IInviteCode, IMessage } from '~/types';
 
 export default {
 	props: ['server'],
 	data() {
 		return {
-			user: useGlobalStore().user,
+			user: storeToRefs(useGlobalStore()).user,
 			messageContent: '',
-			conversation: this.server.messages
+			conversation: this.server.messages as IMessage[],
+			canSendNotifications: false
 		}
 	},
 	mounted() {
 		const route = useRoute()
 		const socket = io();
 
+		Notification.requestPermission().then((result) => {
+			const permission = (result === 'granted') ? true : false
+			this.canSendNotifications = permission
+		});
+
 		const conversationDiv = document.getElementById('conversation-pane');
-		if (!conversationDiv) throw new Error('wtf');
-		setTimeout(() => {
-			conversationDiv.scrollTop = conversationDiv.scrollHeight;
-		})
+		if (!conversationDiv) throw new Error('conversation div not found')
+		this.scrollToBottom()
 
-		socket.on('connect', () => {
-			// listen for messages from the server
-			socket.on(`message-${route.params.id}`, (ev) => {
-				const { message } = ev
-				console.log(message.userId, this.user.id, message, this.conversation)
-				if (message.userId == this.user.id) return;
+		socket.on(`message-${route.params.id}`, (ev) => {
+			const { message } = ev
+			if (message.creator.id === this.user.id) return;
+			if (!document.hasFocus()) {
+				new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: message.serverId });
+			}
 
-				this.conversation.push(message)
+			this.conversation.push(message)
 
-				const lastElementChild = conversationDiv.children[0]?.lastElementChild
-				if (!lastElementChild) return;
+			const lastElementChild = conversationDiv.children[0]?.lastElementChild
+			if (!lastElementChild) return;
 
-				setTimeout(() => {
-					console.log(conversationDiv.scrollTop, conversationDiv.scrollHeight, conversationDiv.clientHeight, lastElementChild.clientHeight, (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight)
-					if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
-					conversationDiv.scrollTop = conversationDiv.scrollHeight;
-				})
+			setTimeout(() => {
+				if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
+				conversationDiv.scrollTop = conversationDiv.scrollHeight;
 			})
 		});
 	},
+	// updated() {
+	// 	const route = useRoute()
+	// 	const socket = io();
+
+	// 	const conversationDiv = document.getElementById('conversation-pane');
+	// 	if (!conversationDiv) throw new Error('conversation div not found')
+	// 	this.scrollToBottom()
+
+	// 	socket.removeAllListeners('connect')
+
+	// 	socket.on('connect', () => {
+	// 		// listen for messages from the server
+	// 		socket.on(`message-${route.params.id}`, (ev) => {
+	// 			const { message } = ev
+	// 			console.log(message.userId, this.user.id, message, this.conversation)
+	// 			if (message.userId == this.user.id) return;
+
+	// 			this.conversation.push(message)
+
+	// 			const lastElementChild = conversationDiv.children[0]?.lastElementChild
+	// 			if (!lastElementChild) return;
+
+	// 			setTimeout(() => {
+	// 				console.log(conversationDiv.scrollTop, conversationDiv.scrollHeight, conversationDiv.clientHeight, lastElementChild.clientHeight, (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight)
+	// 				if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
+	// 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
+	// 			})
+	// 		})
+	// 	});
+	// },
 	methods: {
 		async sendMessage() {
 			const route = useRoute()
 			if (!this.messageContent) return;
 
-			const { message } = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
+			const message: IChannel = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
+
+			if (!message) return;
+			if (this.conversation.includes(message)) return;
 
 			this.conversation.push(message)
 			this.messageContent = '';
@@ -110,6 +159,18 @@ export default {
 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
 			})
 		},
+		async joinServer(invite: IInviteCode) {
+			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id } })
+			if (!server) return;
+			this.user.servers?.push(server)
+		},
+		scrollToBottom() {
+			const conversationDiv = document.getElementById('conversation-pane');
+			if (!conversationDiv) throw new Error('wtf');
+			setTimeout(() => {
+				conversationDiv.scrollTop = conversationDiv.scrollHeight;
+			})
+		}
 		// resizeTextarea() {
 		// 	const textArea = document.getElementById('messageBox')
 		// 	const textBox = document.getElementById('textBox')

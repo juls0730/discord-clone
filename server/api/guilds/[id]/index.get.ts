@@ -20,9 +20,10 @@ export default defineEventHandler(async (event) => {
 		},
 		include: {
 			participants: true,
-			channels: true
+			channels: true,
+			roles: true
 		}
-	}) as IServer
+	}) as IServer | null;
 
 	if (!server) {
 		event.node.res.statusCode = 404;

@@ -1,4 +1,4 @@
-import { IChannel, IServer, IUser, IMessage } from '~/types'
+import { IChannel, IServer, SafeUser, IMessage } from '~/types'
 import { Server } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	const { body, channelId } = await readBody(event)
+	let { body, channelId } = await readBody(event)
 
 	if (!body || !channelId) {
 		event.node.res.statusCode = 400;
@@ -43,9 +43,9 @@ export default defineEventHandler(async (event) => {
 			}
 		}) as IServer
 
-		const userInServer: Array<IUser> = server.participants.filter((e) => e.id === event.context.user.id)
+		const userInServer: SafeUser | undefined = server.participants.find((e: SafeUser) => e.id === event.context.user.id)
 
-		if (userInServer.length > 0) {
+		if (!userInServer) {
 			event.node.res.statusCode = 401;
 			return {
 				message: 'You must be in the server to send a message.'
@@ -59,14 +59,29 @@ export default defineEventHandler(async (event) => {
 			}
 		}
 	} else {
-		const userInDM: Array<IUser> | undefined = channel.dmParticipants?.filter((e) => e.id === event.context.user.id)
+		const userInDM: SafeUser | undefined = channel.dmParticipants?.find((e) => e.id === event.context.user.id)
 
-		if (!userInDM || userInDM.length > 0) {
+		if (!userInDM) {
 			event.node.res.statusCode = 401;
 			return {
 				message: 'You must be in the DM to send a message.'
 			}
 		}
+	}
+
+	const matches = body.match(/<&([a-z]|[0-9]){25}>/g);
+
+	let invites: { id: string; }[] = [];
+	if (matches) {
+		matches.forEach((e: string) => {
+			if (!e) return
+			const opBody = body;
+			body = body.split(e).join('')
+			if (opBody === body) return;
+			const id = e.split('<&')[1]?.split('>')[0];
+			if (!id) return;
+			invites.push({ id });
+		});
 	}
 
 	const message = await prisma.message.create({
@@ -81,16 +96,34 @@ export default defineEventHandler(async (event) => {
 				connect: {
 					id: channelId
 				}
+			},
+			invites: {
+				connect: invites
 			}
 		},
-		include: {
-			creator: true
+		select: {
+			id: true,
+			body: true,
+			creator: {
+				select: {
+					id: true,
+					username: true,
+				}
+			},
+			invites: {
+				select: {
+					id: true,
+					server: true,
+					expires: true,
+					expiryDate: true,
+					maxUses: true
+				}
+			}
 		}
 	}) as IMessage
 
+
 	global.io.emit(`message-${channel.id}`, { message });
 
-	return {
-		message
-	}
+	return message
 })

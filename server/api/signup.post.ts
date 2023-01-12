@@ -1,7 +1,7 @@
 import bcryptjs from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from '@prisma/client'
-import { IUser } from "../../types";
+import { SafeUser } from "~/types";
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 				}
 			]
 		}
-	}) as IUser
+	}) as SafeUser
 
 	if (preExistingUser) {
 		event.node.res.statusCode = 409;
@@ -42,7 +42,7 @@ export default defineEventHandler(async (event) => {
 			passwordhash,
 			email: body.email
 		}
-	}) as IUser
+	}) as SafeUser
 
 	const token = uuidv4()
 

@@ -1,12 +1,13 @@
-import { IUser, IServer, IChannel } from "../types";
+import { Ref } from "vue";
+import { SafeUser, IServer, IChannel } from "../types";
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
-		activeServer: {} as IServer | Record<string, unknown>,
-		user: {} as IUser
+		activeServer: {} as IServer,
+		user: {} as SafeUser
 	}),
 	actions: {
-		setUser(user: IUser) {
+		setUser(user: SafeUser) {
 			this.user = user;
 		},
 		addServer(server: IServer) {
@@ -19,17 +20,25 @@ export const useGlobalStore = defineStore('global', {
 		},
 		setActive(type: string, serverId: string) {
 			if (serverId === '@me') {
-				this.activeServer = {}
+				this.activeServer = {} as IServer
 				return;
 			}
+			console.log(this.activeServer)
 			if (!this.user.channels || !this.user.servers) return;
 
 			type = (type === 'dm') ? 'channels' : 'servers'
 
 			if (type !== 'channels' && type !== 'servers') return;
 
-			const searchableArray: IChannel[] | IServer[] = this["user"][type]
-			this.activeServer = searchableArray.find((e: IServer | IChannel) => e.id === serverId)
+			const searchableArray: IChannel[] | IServer[] | undefined = this["user"][type]
+			if (!searchableArray) return;
+			const activeServer = searchableArray.find((e: IServer | IChannel) => e.id === serverId)
+			console.log(searchableArray, this["user"], activeServer)
+
+			if (!activeServer) return;
+
+			this.activeServer = activeServer
+			console.log(this.activeServer)
 		},
 	},
 })

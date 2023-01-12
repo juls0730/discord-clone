@@ -15,25 +15,66 @@
 		<div class="w-full"
 			v-else>
 			<div class="flex p-4 border-b border-zinc-600/80">
-				<h4 class="text-lg font-semibold w-fit ">
-					{{ server.name }}
+				<h4 class="text-lg font-semibold grid gap-1 grid-cols-[1fr_28px] w-full">
+					<span>{{ server.name }}</span>
+					<button class="cursor-pointer p-1 hover:backdrop-brightness-110 transition-all">
+						<span class="h-fit w-[20px]">
+							<svg xmlns="http://www.w3.org/2000/svg"
+								width="20"
+								height="20"
+								viewBox="0 0 24 24">
+								<path fill="none"
+									stroke="currentColor"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="m6 9l6 6l6-6" />
+							</svg>
+						</span>
+					</button>
 				</h4>
 			</div>
 			<div class="flex gap-y-1.5 px-1.5 mt-2 flex-col">
-				<div class="flex text-center hover:bg-zinc-600/70 px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm"
+				<button @click="createInvite"
+					v-if="userIsOwnerOrAdmin">make invite</button>
+				<button
+					class="flex text-center hover:bg-zinc-600/70 px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm gap-1/5 cursor-pointer"
 					v-for="channel in server.channels"
+					@click="openChannel(channel.id)"
 					:key="channel.id">
-					<svg width="24"
-						height="24"
-						viewBox="0 0 24 24">
-						<path fill="none"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M5 9h14M5 15h14M11 4L7 20M17 4l-4 16" />
-					</svg> {{ channel.name }}
-				</div>
+					<span>
+						<svg class="text-zinc-300 my-auto"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24">
+							<path fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M5 9h14M5 15h14M11 4L7 20M17 4l-4 16" />
+						</svg>
+					</span>
+					<span>{{ channel.name }}</span>
+				</button>
+				<button v-if="userIsOwnerOrAdmin"
+					@click="openCreateChannelModel"
+					class="flex text-center hover:bg-zinc-600/70 px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer">
+					<span>
+						<svg xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24">
+							<path fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 5v14m-7-7h14" />
+						</svg>
+					</span>
+					<span>Add channel</span>
+				</button>
 			</div>
 		</div>
 
@@ -64,10 +105,72 @@
 			</div>
 		</div>
 	</div>
+
+	<div v-if="createChannelModelOpen"
+		class="absolute z-10 top-0 bottom-0 left-0 right-0">
+		<div class="bg-zinc-900/80 w-screen h-screen"
+			@click="createChannelModelOpen = false">
+		</div>
+		<div
+			class="p-4 z-20 absolute bg-zinc-800 shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
+			<h2 class="font-semibold text-xl">
+				Create a channel:
+			</h2>
+			<div>
+				<form @submit.prevent="createChannel"
+					class="w-3/5">
+					<input v-model="channelName"
+						type="text"
+						class="py-2 px-3 rounded-md mb-2 bg-zinc-700 shadow-md border border-zinc-700/80"
+						placeholder="Channel name" />
+					<input type="submit"
+						class="py-2 px-3 rounded-md bg-zinc-700 shadow-md border border-zinc-700/80" />
+				</form>
+			</div>
+		</div>
+	</div>
 </template>
 
 <script lang="ts">
+import { IRole, IServer } from '~/types';
+
 export default {
+	data() {
+		return {
+			createChannelModelOpen: false,
+			channelName: '',
+			userIsOwnerOrAdmin: false
+		}
+	},
+	mounted() {
+		setTimeout(() => {
+			if (!this.server.roles) {
+				console.log(this.server)
+				throw new Error('server must be null');
+			}
+			this.userIsOwnerOrAdmin = this.server.roles.find((e: IRole) => e.users.some((el) => el.id === this.user.id)).owner ||
+				this.server.roles.find((e: IRole) => e.users.some((el) => el.id === this.user.id)).administrator
+		})
+	},
+	methods: {
+		openCreateChannelModel() {
+			this.createChannelModelOpen = true;
+		},
+		async createChannel() {
+			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName } })
+
+			this.server.channels.push(channel)
+			this.createChannelModelOpen = false;
+		},
+		openChannel(id: string) {
+			const router = useRouter()
+
+			router.push({ params: { id } })
+		},
+		async createInvite() {
+			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST' })
+		},
+	},
 	props: ['server', 'user']
 }
 </script>

@@ -1,4 +1,4 @@
-import { IChannel, IUser } from '~/types'
+import { IChannel, SafeUser } from '~/types'
 import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
@@ -23,19 +23,23 @@ export default defineEventHandler(async (event) => {
 		where: {
 			id: partnerId
 		}
-	}) as IUser
+	}) as SafeUser | null;
 
 	const user = await prisma.user.findFirst({
 		where: {
 			id: event.context.user.id
 		}
-	}) as IUser
+	}) as SafeUser | null;
 
 	if (!partner) {
 		event.node.res.statusCode = 400;
 		return {
 			message: 'No partner found'
 		}
+	}
+
+	if (!user) {
+		throw new Error('user not found?')
 	}
 
 	const preExistingServer = await prisma.channel.findFirst({

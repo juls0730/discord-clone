@@ -2,16 +2,6 @@
 	<MessagePane :server="server" />
 </template>
 
-<script async setup lang="ts">
-const route = useRoute()
-
-const server: IChannel = await $fetch(`/api/channels/${route.params.id}`)
-if (server) {
-	useGlobalStore().addDM(server);
-	useGlobalStore().setActive('dms', server.id);
-}
-</script>
-
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store'
 import { IChannel } from '~/types'
@@ -21,8 +11,24 @@ definePageMeta({
 })
 
 export default {
+	async setup() {
+		const route = useRoute()
+
+		const headers = useRequestHeaders(['cookie']) as Record<string, string>
+		const server: IChannel = await $fetch(`/api/channels/${route.params.id}`, { headers })
+		if (!server) throw new Error('could not find the dm')
+		useGlobalStore().addDM(server);
+		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?')
+		useGlobalStore().setActive('dms', route.params.id);
+
+		return {
+			server
+		}
+	},
 	async updated() {
-		if (!useGlobalStore().activeServer == this.server) useGlobalStore().setActive('dms', this.server.id)
+		const route = useRoute()
+		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?')
+		if (useGlobalStore().activeServer !== this.server) useGlobalStore().setActive('dms', route.params.id)
 	},
 }
 </script>

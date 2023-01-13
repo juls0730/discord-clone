@@ -36,4 +36,8 @@ export default {
             },
         ],
     ],
+
+    typescript: {
+        strict: true
+    }
 }

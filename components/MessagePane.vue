@@ -1,5 +1,17 @@
 <template>
 	<div class="h-full bg-[hsl(220,calc(1*7.7%),22.9%)] relative text-white">
+		<div class="bg-[hsl(220,calc(1*7.7%),22.9%)] absolute w-full shadow px-4 py-3 flex items-center z-[1] shadow-zinc-900/50">
+			<span>
+				<svg class="text-zinc-300/80 my-auto" xmlns="http://www.w3.org/2000/svg"
+					width="24"
+					height="24"
+					viewBox="0 0 24 24">
+					<path fill="currentColor"
+						d="m5.41 21l.71-4h-4l.35-2h4l1.06-6h-4l.35-2h4l.71-4h2l-.71 4h6l.71-4h2l-.71 4h4l-.35 2h-4l-1.06 6h4l-.35 2h-4l-.71 4h-2l.71-4h-6l-.71 4h-2M9.53 9l-1.06 6h6l1.06-6h-6Z" />
+				</svg>
+			</span>
+			<span class="text-zinc-100 font-semibold">{{ server.name }}</span>
+		</div>
 		<div class="w-full h-[calc(100%-60px)] overflow-y-scroll pb-1"
 			id="conversation-pane">
 			<div>
@@ -16,41 +28,18 @@
 								</p>
 								<p class="break-words max-w-full">{{ message.body }}</p>
 							</div>
-							<div>
-								<div v-for="invite in message.invites">
-									<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] p-4 rounded-md shadow-md mr-2">
-										<p class="text-sm font-semibold text-zinc-100">You've been invited to join a
-											server</p>
-										<span class="text-xl font-bold capitalize">{{ invite.server.name }}</span>
-										<div class="flex items-center">
-											<span
-												class="before:bg-[hsl(214,9.9%,50.4%)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"></span>
-											<span>{{ invite.server.participants.length }} Members</span>
-										</div>
-										<div class="flex w-full justify-end">
-											<button @click="joinServer(invite)"
-												class="font-semibold rounded px-4 py-2 transition-colors"
-												:class="(invite.server.participants.find((e) => e.id === user.id)) ? 'bg-green-800 cursor-not-allowed' : 'bg-green-700 hover:bg-green-600'">
-											<span v-if="invite.server.participants.find((e) => e.id === user.id)">
-												Joined
-											</span>
-											<span v-else>
-												Join
-											</span>
-											</button>
-										</div>
-									</div>
-								</div>
+							<div v-for="invite in message.invites">
+								<InviteCard :invite="invite" />
 							</div>
 						</div>
 					</div>
 				</div>
 			</div>
 		</div>
-		<div class="conversation-input w-[calc(100vw-88px-240px)]">
+		<div class="conversation-input w-[calc(100vw-88px-240px)] h-[61.1px]">
 			<form @submit.prevent="sendMessage"
 				@keydown.enter.exact.prevent="sendMessage"
-				class="relative px-4 w-full">
+				class="relative px-4 w-full pt-1.5">
 				<div id="textbox"
 					class="px-4 rounded-md w-full h-[44px] bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
 					<textarea type="text"
@@ -121,47 +110,22 @@ export default {
 			if (!lastElementChild) return;
 
 			setTimeout(() => {
-				if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
+				if (conversationDiv.scrollTop + 20 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
 			})
 		});
 	},
-	// updated() {
-	// 	const route = useRoute()
-	// 	const socket = io();
-
-	// 	const conversationDiv = document.getElementById('conversation-pane');
-	// 	if (!conversationDiv) throw new Error('conversation div not found')
-	// 	this.scrollToBottom()
-
-	// 	socket.removeAllListeners('connect')
-
-	// 	socket.on('connect', () => {
-	// 		// listen for messages from the server
-	// 		socket.on(`message-${route.params.id}`, (ev) => {
-	// 			const { message } = ev
-	// 			console.log(message.userId, this.user.id, message, this.conversation)
-	// 			if (message.userId == this.user.id) return;
-
-	// 			this.conversation.push(message)
-
-	// 			const lastElementChild = conversationDiv.children[0]?.lastElementChild
-	// 			if (!lastElementChild) return;
-
-	// 			setTimeout(() => {
-	// 				console.log(conversationDiv.scrollTop, conversationDiv.scrollHeight, conversationDiv.clientHeight, lastElementChild.clientHeight, (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight)
-	// 				if (conversationDiv.scrollTop + 11.2 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
-	// 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
-	// 			})
-	// 		})
-	// 	});
-	// },
+	unmounted() {
+		const socket = io();
+		socket.removeAllListeners();
+	},
 	methods: {
 		async sendMessage() {
 			const route = useRoute()
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			if (!this.messageContent) return;
 
-			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id } })
+			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id }, headers })
 
 			if (!message) return;
 			if (this.conversation.includes(message)) return;
@@ -174,17 +138,10 @@ export default {
 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
 			})
 		},
-		async joinServer(invite: IInviteCode) {
-			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id } })
-			if (!server) return;
-			this.servers?.push(server)
-		},
 		scrollToBottom() {
 			const conversationDiv = document.getElementById('conversation-pane');
 			if (!conversationDiv) throw new Error('wtf');
-			setTimeout(() => {
-				conversationDiv.scrollTop = conversationDiv.scrollHeight;
-			})
+			conversationDiv.scrollTo(0, conversationDiv.scrollHeight);
 		}
 		// resizeTextarea() {
 		// 	const textArea = document.getElementById('messageBox')
@@ -208,7 +165,6 @@ export default {
 	flex-direction: row;
 	margin-top: 0.5rem;
 	margin-bottom: 0.5rem;
-	height: 60px;
 	background-color: hsl(220, calc(1 * 7.7%), 22.9%);
 	bottom: calc(0px - 0.5rem);
 }

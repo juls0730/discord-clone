@@ -3,8 +3,11 @@ import { PrismaClient } from '@prisma/client'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
-	if (!event.context.user.authenticated) return {
-		message: 'You must be logged in to view a channel.'
+	if (!event.context.user.authenticated) {
+		event.node.res.statusCode = 401;
+		return {
+			message: 'You must be logged in to view a channel.'
+		}
 	}
 
 	if (!event.context.params.id) {

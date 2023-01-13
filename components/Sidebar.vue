@@ -1,7 +1,7 @@
 <template>
-	<div
-		class="bg-[hsl(223,calc(1*6.9%),19.8%)] min-w-60 w-60 h-screen shadow-sm text-white select-none grid grid-rows-[93.5%_1fr]">
-		<div v-if="!server.id || server.DM == true">
+	<aside
+		class="bg-[hsl(223,calc(1*6.9%),19.8%)] min-w-60 w-60 h-screen shadow-sm text-white select-none grid grid-rows-[93.5%_1fr] relative z-[2]">
+		<div v-if="serverType === 'dms' || !server.id">
 			<div>
 				<nuxt-link v-for="dm in dms"
 					:to="'/channel/@me/' + dm.id">
@@ -14,36 +14,14 @@
 		</div>
 		<div class="w-full"
 			v-else>
-			<div class="flex p-4 border-b border-zinc-600/80">
-				<h4 class="text-lg font-semibold grid gap-1 grid-cols-[1fr_28px] w-full">
-					<span>{{ server.name }}</span>
-					<button class="cursor-pointer p-1 bg-[hsl(223,calc(1*6.9%),19.8%)] hover:bg-[hsl(223,calc(1*6.9%),26.4%)] transition-all">
-						<span class="h-fit w-[20px]">
-							<svg xmlns="http://www.w3.org/2000/svg"
-								width="20"
-								height="20"
-								viewBox="0 0 24 24">
-								<path fill="none"
-									stroke="currentColor"
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="2"
-									d="m6 9l6 6l6-6" />
-							</svg>
-						</span>
-					</button>
-				</h4>
-			</div>
-			<div class="flex gap-y-1.5 px-1.5 mt-2 flex-col">
-				<button @click="createInvite"
-					v-if="userIsOwner || userIsAdmin">make invite</button>
-				<button
-					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm gap-1/5 cursor-pointer"
-					v-for="channel in server.channels"
-					@click="openChannel(channel.id)"
-					:key="channel.id">
-					<span>
-						<svg class="text-zinc-300 my-auto"
+			<h4 @click="serverDropdownOpen = !serverDropdownOpen"
+				class="py-3 px-4 font-semibold grid gap-1 grid-cols-[1fr_28px] w-full items-center cursor-pointer p-1 bg-[hsl(223,calc(1*6.9%),19.8%)] transition-all"
+				:class="(!serverDropdownOpen) ? 'hover:bg-[hsl(223,calc(1*6.9%),26.4%)]' : 'bg-[hsl(223,calc(1*6.9%),26.4%)]'">
+				<span>{{ server.name }}</span>
+				<button>
+					<span v-if="!serverDropdownOpen"
+						class="h-fit w-[20px]">
+						<svg xmlns="http://www.w3.org/2000/svg"
 							width="20"
 							height="20"
 							viewBox="0 0 24 24">
@@ -52,16 +30,79 @@
 								stroke-linecap="round"
 								stroke-linejoin="round"
 								stroke-width="2"
-								d="M5 9h14M5 15h14M11 4L7 20M17 4l-4 16" />
+								d="m6 9l6 6l6-6" />
+						</svg>
+					</span>
+					<span class="h-fit w-[20px]"
+						v-else>
+						<svg xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24">
+							<path fill="none"
+								stroke="currentColor"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M18 6L6 18M6 6l12 12" />
+						</svg>
+					</span>
+				</button>
+			</h4>
+			<div>
+				<DropdownMenu :opened="serverDropdownOpen">
+					<div>
+						<ul class="flex flex-col gap-y-1">
+							<DropdownItem v-if="userIsOwner || userIsAdmin"
+								@click="createInvite">
+								<span class="mr-1.5 h-fit">
+									<svg xmlns="http://www.w3.org/2000/svg"
+										width="20"
+										height="20"
+										viewBox="0 0 24 24">
+										<g fill="none"
+											stroke="currentColor"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											stroke-width="2">
+											<circle cx="9"
+												cy="7"
+												r="4" />
+											<path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m1-10h6m-3-3v6" />
+										</g>
+									</svg>
+								</span>
+								<span>
+									Invite a friend
+								</span>
+							</DropdownItem>
+						</ul>
+					</div>
+				</DropdownMenu>
+			</div>
+			<div class="flex gap-y-1.5 px-1.5 mt-2 flex-col">
+				<button
+					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
+					v-for="channel in server.channels"
+					@click="openChannel(channel.id)"
+					:key="channel.id">
+					<span class="h-fit">
+						<svg class="text-zinc-300/80 my-auto"
+							xmlns="http://www.w3.org/2000/svg"
+							width="20"
+							height="20"
+							viewBox="0 0 24 24">
+							<path fill="currentColor"
+								d="m5.41 21l.71-4h-4l.35-2h4l1.06-6h-4l.35-2h4l.71-4h2l-.71 4h6l.71-4h2l-.71 4h4l-.35 2h-4l-1.06 6h4l-.35 2h-4l-.71 4h-2l.71-4h-6l-.71 4h-2M9.53 9l-1.06 6h6l1.06-6h-6Z" />
 						</svg>
 					</span>
 					<span>{{ channel.name }}</span>
 				</button>
 				<button v-if="userIsOwner || userIsAdmin"
 					@click="openCreateChannelModel"
-					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer">
+					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer items-center">
 					<span>
-						<svg xmlns="http://www.w3.org/2000/svg"
+						<svg class="text-zinc-300/80 my-auto" xmlns="http://www.w3.org/2000/svg"
 							width="20"
 							height="20"
 							viewBox="0 0 24 24">
@@ -78,12 +119,44 @@
 			</div>
 		</div>
 
-		<div>
+		<div class="relative">
+			<DropdownMenu class="bottom-full"
+				:inverted="true"
+				:opened="userDropdownOpen">
+				<div>
+					<ul class="flex flex-col gap-y-1">
+						<DropdownItem v-if="userIsOwner || userIsAdmin"
+							@click="createInvite">
+							<span class="mr-1.5 h-fit">
+								<svg xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									viewBox="0 0 24 24">
+									<g fill="none"
+										stroke="currentColor"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2">
+										<circle cx="9"
+											cy="7"
+											r="4" />
+										<path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m1-10h6m-3-3v6" />
+									</g>
+								</svg>
+							</span>
+							<span>
+								Invite a friend
+							</span>
+						</DropdownItem>
+					</ul>
+				</div>
+			</DropdownMenu>
 			<div class="bg-[hsl(220,calc(1*6.8%),17.3%)] h-full p-3">
 				<div class="grid grid-cols-[32px_1fr_32px] gap-x-2 items-center">
 					<span class="bg-[hsl(220,calc(1*6.8%),22.6%)] w-[32px] h-[32px] rounded-full"></span>
 					<span class="h-fit w-fit overflow-ellipsis">{{ user.username }}</span>
-					<span class="text-zinc-300 hover:bg-[hsl(220,calc(1*6.8%),14.3%)] p-1 transition-colors">
+					<button @click="userDropdownOpen = !userDropdownOpen"
+						class="text-zinc-300 hover:bg-[hsl(220,calc(1*6.8%),14.3%)] p-1 transition-colors">
 						<svg xmlns="http://www.w3.org/2000/svg"
 							width="24"
 							height="24"
@@ -100,11 +173,11 @@
 									r="3" />
 							</g>
 						</svg>
-					</span>
+					</button>
 				</div>
 			</div>
 		</div>
-	</div>
+	</aside>
 
 	<div v-if="createChannelModelOpen"
 		class="absolute z-10 top-0 bottom-0 left-0 right-0">
@@ -139,31 +212,30 @@ export default {
 	data() {
 		return {
 			server: storeToRefs(useGlobalStore()).activeServer,
+			serverType: storeToRefs(useGlobalStore()).activeServerType,
 			user: storeToRefs(useGlobalStore()).user,
 			dms: storeToRefs(useGlobalStore()).dms,
 			createChannelModelOpen: false,
+			serverDropdownOpen: false,
+			userDropdownOpen: false,
 			channelName: '',
-			userIsOwner: false,
-			userIsAdmin: false,
 		}
 	},
-	async mounted() {
-		const that = this;
-		var interval = setInterval(function () {
-			// get elem
-			if (typeof that.server.roles == 'undefined') return;
-			clearInterval(interval);
-
-			that.userIsOwner = that.server.roles?.find((e: IRole) => e.users.some((el) => el.id === that.user.id))?.owner || false
-			that.userIsAdmin = that.server.roles?.find((e: IRole) => e.users.some((el) => el.id === that.user.id))?.administer || false
-		}, 10);
+	computed: {
+		userIsOwner() {
+			return this.server && this.serverType === "servers" && this.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user.id))?.owner
+		},
+		userIsAdmin() {
+			return this.server && this.serverType === "servers" && this.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user.id))?.administer
+		}
 	},
 	methods: {
 		openCreateChannelModel() {
 			this.createChannelModelOpen = true;
 		},
 		async createChannel() {
-			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName } }) as IChannel
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName }, headers }) as IChannel
 
 			if (!channel) return;
 
@@ -176,7 +248,8 @@ export default {
 			router.push({ params: { id } })
 		},
 		async createInvite() {
-			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST' })
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>
+			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST', headers })
 		},
 	},
 }

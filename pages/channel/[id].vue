@@ -2,19 +2,6 @@
 	<MessagePane :server="server" />
 </template>
 
-<script async setup lang="ts">
-const route = useRoute()
-
-const server: IChannel = await $fetch(`/api/channels/${route.params.id}`)
-
-const realServer = useGlobalStore().servers?.filter((e) => e.channels.some((el) => el.id == route.params.id))[0]
-
-if (realServer) {
-	useGlobalStore().addServer(realServer);
-	useGlobalStore().setActive('servers', realServer.id)
-}
-</script>
-
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store'
 import { IChannel } from '~/types'
@@ -24,12 +11,32 @@ definePageMeta({
 })
 
 export default {
+	async setup() {
+		const route = useRoute()
+
+		const headers = useRequestHeaders(['cookie']) as Record<string, string>
+		const server: IChannel = await $fetch(`/api/channels/${route.params.id}`, { headers })
+
+		const realServer = useGlobalStore().servers?.find((e) => e.channels.some((el) => el.id == route.params.id))
+
+		if (!realServer) throw new Error('realServer not found, this means that the channel is serverless but not a dm????');
+		useGlobalStore().addServer(realServer);
+		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
+		useGlobalStore().setActive('servers', route.params.id)
+
+		return {
+			server
+		}
+	},
 	async updated() {
+		const route = useRoute()
+		const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 		if (!this.server) return;
 
-		this.server = await $fetch(`/api/channels/${route.params.id}`);
+		this.server = await $fetch(`/api/channels/${route.params.id}`, { headers });
 
-		if (!useGlobalStore().activeServer == this.server.id) useGlobalStore().setActive('servers', this.server.id)
+		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
+		if (useGlobalStore().activeServer.id !== this.server.id) useGlobalStore().setActive('servers', route.params.id)
 	}
 }
 </script>

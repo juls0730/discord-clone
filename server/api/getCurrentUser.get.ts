@@ -4,7 +4,7 @@ const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		// event.node.res.statusCode = 401;
+		event.node.res.statusCode = 401;
 		return {
 			message: "Unauthenticated"
 		}

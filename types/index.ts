@@ -13,16 +13,16 @@ export type SafeUser = Omit<Omit<IUser, 'passwordhash'>, 'email'>
 export interface IServer {
 	id: string;
 	name: string;
-	channels?: Array<IChannel>;
+	channels: Array<IChannel>;
 	participants: Array<SafeUser>;
-	roles?: Array<IRole>;
+	roles: Array<IRole>;
 	inviteCode?: Array<IInviteCode>;
 }
 
 export interface IChannel {
 	id: string;
 	name: string;
-	server?: IServer;
+	server: IServer;
 	messages?: Array<IMessage>
 	DM: boolean;
 	dmParticipants?: Array<SafeUser>;

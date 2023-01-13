@@ -1,7 +1,6 @@
 <template>
 	<Suspense>
-		<div v-if="user.id"
-			class="flex h-screen max-h-screen text-white">
+		<div class="flex h-screen max-h-screen text-white">
 			<Nav />
 			<Sidebar />
 			<div class="w-[calc(100vw-88px-240px)] h-full">
@@ -23,24 +22,36 @@ import { SafeUser } from '~/types'
 export default {
 	data() {
 		return {
-			activeServer: storeToRefs(useGlobalStore()).activeServer,
-			user: storeToRefs(useGlobalStore()).user
+			user: storeToRefs(useGlobalStore()).user,
 		}
 	},
 	async setup() {
-
-		const userStore = useGlobalStore()
+		const globalStore = useGlobalStore()
 		const sessionToken = useCookie('sessionToken')
-		if (userStore.user.id === undefined && sessionToken.value) {
-			const user: SafeUser = await $fetch('/api/getCurrentUser')
+		if (globalStore.user.id === undefined && sessionToken.value) {
+			const route = useRoute()
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>
+			const [user, { dms, servers }] = await Promise.all([
+				$fetch('/api/getCurrentUser', { headers }) as unknown as SafeUser,
+				$fetch('/api/user/getServers', { headers })
+			])
 
-			if (!user) return;
+			if (!user || !servers || !dms) return;
 
-			userStore.setUser(user)
-			const { channels: dms, servers } = await $fetch('/api/user/getServers')
+			globalStore.setUser(user)
 
-			useGlobalStore().servers = servers
-			useGlobalStore().dms = dms
+			globalStore.setServers(servers)
+			globalStore.setDms(dms)
+			console.log('params', route.params.id)
+			if (route.params.id && typeof route.params.id === 'string') {
+				globalStore.setActive(route.path.includes('@me') ? 'dms' : 'servers', route.params.id)
+			}
+
+			const server = globalStore.activeServer
+
+			return {
+				server
+			}
 		}
 	}
 }

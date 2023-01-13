@@ -19,9 +19,14 @@ export default {
 			userId: ''
 		}
 	},
+	mounted() {
+		console.log('mounted')
+		useGlobalStore().setActive('dms', '@me')
+	},
 	methods: {
 		async startDM() {
-			const server: IChannel = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId } }) 
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>
+			const server: IChannel = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId }, headers }) 
 
 			useGlobalStore().addDM(server)
 			useRouter().push({ path: '/channel/@me/' + server.id })

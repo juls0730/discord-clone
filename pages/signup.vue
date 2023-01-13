@@ -48,13 +48,15 @@ export default {
 	},
 	methods: {
 		async signup() {
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>
 			if (!this.username || !this.password || !this.email) return;
 			const user = await $fetch('/api/signup', {
 				method: 'post', body: {
 					username: this.username,
 					email: this.email,
 					password: this.password
-				}
+				},
+				headers
 			}) as { userId: string; token: string; user: SafeUser; }
 
 			const userId = useCookie('userId')

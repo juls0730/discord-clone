@@ -5,21 +5,36 @@
 			<nuxt-link to="/channel/@me">
 				<div @click="openServer('@me', 'dms')"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300">
-					<svg width="32"
-						height="32"
-						viewBox="0 0 24 24">
-						<path fill="none"
-							stroke="currentColor"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 12c2-2.96 0-7-1-8c0 3.038-1.773 4.741-3 6c-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5c-1.786 3-2.791 3-4 2z" />
-					</svg>
+					<span>
+						<svg width="32"
+							height="32"
+							viewBox="0 0 24 24">
+							<defs>
+								<linearGradient id="fire"
+									x1="-2.778%"
+									x2="100%"
+									y1="24%"
+									y2="48%">
+									<stop offset="0%"
+										stop-color="#ff0c41" />
+									<stop offset="100%"
+										stop-color="#ff6b0c" />
+								</linearGradient>
+							</defs>
+							<path fill="none"
+								stroke="url(#fire)"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M12 12c2-2.96 0-7-1-8c0 3.038-1.773 4.741-3 6c-1.226 1.26-2 3.24-2 5a6 6 0 1 0 12 0c0-1.532-1.056-3.94-2-5c-1.786 3-2.791 3-4 2z" />
+						</svg>
+					</span>
 				</div>
 			</nuxt-link>
 		</div>
 		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
-			<nuxt-link v-for="server in servers" :to="'/channel/' + server.channels[0].id">
+			<nuxt-link v-for="server in servers"
+				:to="'/channel/' + server.channels[0].id">
 				<div :key="server.id"
 					@click="openServer(server.id, 'servers')"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
@@ -63,9 +78,6 @@
 
 	<div v-if="createServerModelOpen"
 		class="absolute z-10 top-0 bottom-0 left-0 right-0">
-		<div class="bg-zinc-900/80 w-screen h-screen"
-			@click="createServerModelOpen = false">
-		</div>
 		<div
 			class="p-4 z-20 absolute bg-zinc-800 shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
 			<h2 class="font-semibold text-xl">
@@ -83,7 +95,11 @@
 				</form>
 			</div>
 		</div>
+		<div class="bg-zinc-900/80 w-screen h-screen"
+			@click="createServerModelOpen = false">
+		</div>
 	</div>
+
 </template>
 
 <script lang="ts">
@@ -101,12 +117,13 @@ export default {
 	methods: {
 		async createServer() {
 			const globalStore = useGlobalStore();
-			const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName } })
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+			const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName }, headers })
 			this.createServerModelOpen = false;
 			this.serverName = '';
 			globalStore.addServer(server)
 		},
-		openServer(id: string, type: string): void {
+		openServer(id: string, type: "servers" | "dms"): void {
 			useGlobalStore().setActive(type, id)
 		}
 	},

@@ -20,7 +20,6 @@ export default {
 		}
 	},
 	mounted() {
-		console.log('mounted')
 		useGlobalStore().setActive('dms', '@me')
 	},
 	methods: {

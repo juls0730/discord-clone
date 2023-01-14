@@ -1,7 +1,7 @@
 import bcryptjs from "bcryptjs";
 import { v4 as uuidv4 } from "uuid";
 import { PrismaClient } from '@prisma/client'
-import { SafeUser } from "~/types";
+import { IUser, SafeUser } from "~/types";
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -45,53 +45,8 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			username: true,
-			passwordhash: true,
-			email: true,
-			channels: {
-				select: {
-					id: true,
-					name: true,
-					messages: false,
-					DM: true,
-					dmParticipants: true,
-					serverId: true
-				}
-			},
-			servers: {
-				select: {
-					id: true,
-					name: true,
-					channels: {
-						select: {
-							id: true,
-							DM: true,
-							name: true,
-							serverId: true
-						}
-					},
-					participants: {
-						select: {
-							id: true,
-							username: true
-						}
-					},
-					roles: {
-						select: {
-							id: true,
-							name: true,
-							administrator: true,
-							owner: true,
-							users: {
-								select: {
-									id: true
-								}
-							}
-						}
-					}
-				},
-			}
 		},
-	}) as unknown
+	}) as unknown as IUser
 
 	const token = uuidv4()
 

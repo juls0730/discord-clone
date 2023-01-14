@@ -21,6 +21,26 @@ export default {
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?')
 		useGlobalStore().setActive('dms', route.params.id);
 
+		function parseBody(body) {
+			const mentions = body.match(/<@([a-z]|[0-9]){25}>/g);
+
+			if (mentions) {
+				mentions.forEach((e: string) => {
+					if (!e) return
+					const id = e.split('<@')[1]?.split('>')[0];
+					if (!id) return;
+					const user = server.dmParticipants.find((e) => e.id === id)
+					body = body.split(e).join(`@${user.username}`)
+				});
+			}
+
+			return body
+		}
+
+		server.messages?.forEach((e) => {
+			e.body = parseBody(e.body)
+		})
+
 		return {
 			server
 		}

@@ -1,6 +1,7 @@
 import { IChannel, IServer, SafeUser, IMessage } from '~/types'
 import { Server } from 'socket.io'
 import { PrismaClient } from '@prisma/client'
+import { registerRuntimeHelpers } from '@vue/compiler-core'
 const prisma = new PrismaClient()
 
 declare global {
@@ -28,20 +29,67 @@ export default defineEventHandler(async (event) => {
 		where: {
 			id: channelId
 		},
-		include: {
-			dmParticipants: true
+		select: {
+			id: true,
+			name: true,
+			messages: false,
+			DM: true,
+			dmParticipants: {
+				select: {
+					id: true,
+					username: true
+				}
+			}
 		}
-	}) as IChannel
+	}) as IChannel | null;
+
+	if (!channel) {
+		event.node.res.statusCode = 404;
+		return {
+			message: `Channel with id "${channelId}" not found.` 
+		}
+	}
 
 	if (!channel.DM) {
 		const server = await prisma.server.findFirst({
 			where: {
 				id: channel.serverId
 			},
-			include: {
-				participants: true
+			select: {
+				id: true,
+				name: true,
+				channels: {
+					select: {
+						id: true,
+						DM: true,
+						name: true
+					}
+				},
+				participants: {
+					select: {
+						id: true,
+						username: true
+					}
+				},
+				roles: {
+					select: {
+						id: true,
+						name: true,
+						administrator: true,
+						owner: true,
+						users: {
+							select: {
+								id: true
+							}
+						}
+					}
+				}
 			}
-		}) as IServer
+		}) as IServer | null;
+
+		if (!server) {
+			throw new Error(`server with id "${channel.serverId}" is not found but channel with id "${channel.id}" is not a dm?`)
+		}
 
 		const userInServer: SafeUser | undefined = server.participants.find((e: SafeUser) => e.id === event.context.user.id)
 
@@ -69,11 +117,11 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-	const matches = body.match(/<&([a-z]|[0-9]){25}>/g);
+	const inviteCodes = body.match(/<&([a-z]|[0-9]){25}>/g);
 
 	let invites: { id: string; }[] = [];
-	if (matches) {
-		matches.forEach((e: string) => {
+	if (inviteCodes) {
+		inviteCodes.forEach((e: string) => {
 			if (!e) return
 			const opBody = body;
 			body = body.split(e).join('')

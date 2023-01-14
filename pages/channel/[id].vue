@@ -24,8 +24,28 @@ export default {
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
 		useGlobalStore().setActive('servers', route.params.id)
 
+		function parseBody(body) {
+			const mentions = body.match(/<@([a-z]|[0-9]){25}>/g);
+
+			if (mentions) {
+				mentions.forEach((e: string) => {
+					if (!e) return
+					const id = e.split('<@')[1]?.split('>')[0];
+					if (!id) return;
+					const user = realServer?.participants.find((e) => e.id === id)
+					body = body.split(e).join(`@${user.username}`)
+				});
+			}
+
+			return body
+		}
+
+		server.messages?.forEach((e) => {
+			e.body = parseBody(e.body)
+		})
+
 		return {
-			server
+			server,
 		}
 	},
 	async updated() {
@@ -36,7 +56,9 @@ export default {
 		this.server = await $fetch(`/api/channels/${route.params.id}`, { headers });
 
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
-		if (useGlobalStore().activeServer.id !== this.server.id) useGlobalStore().setActive('servers', route.params.id)
+		if (useGlobalStore().activeServer.id !== this.server.id) {
+			useGlobalStore().setActive('servers', route.params.id)
+		}
 	}
 }
 </script>

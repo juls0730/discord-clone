@@ -3,7 +3,7 @@
 		class="p-4 bg-[hsl(216,calc(1*7.2%),13.5%)] grid grid-cols-1 grid-rows-[56px_1fr_56px] h-screen min-w-[88px] text-white relative">
 		<div>
 			<nuxt-link to="/channel/@me">
-				<div @click="openServer('@me', 'dms')"
+				<div
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300">
 					<span>
 						<svg width="32"
@@ -36,7 +36,6 @@
 			<nuxt-link v-for="server in servers"
 				:to="'/channel/' + server.channels[0].id">
 				<div :key="server.id"
-					@click="openServer(server.id, 'servers')"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
 					<svg width="32"
 						height="32"
@@ -123,9 +122,6 @@ export default {
 			this.serverName = '';
 			globalStore.addServer(server)
 		},
-		openServer(id: string, type: "servers" | "dms"): void {
-			useGlobalStore().setActive(type, id)
-		}
 	},
 }
 </script>

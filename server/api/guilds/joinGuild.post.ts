@@ -71,10 +71,35 @@ export default defineEventHandler(async (event) => {
 				]
 			}
 		},
-		include: {
-			participants: true,
-			channels: true,
-			roles: true
+		select: {
+			id: true,
+			name: true,
+			channels: {
+				select: {
+					id: true,
+					DM: true,
+					name: true
+				}
+			},
+			participants: {
+				select: {
+					id: true,
+					username: true
+				}
+			},
+			roles: {
+				select: {
+					id: true,
+					name: true,
+					administrator: true,
+					owner: true,
+					users: {
+						select: {
+							id: true
+						}
+					}
+				}
+			}
 		}
 	}) as unknown as IServer
 

@@ -1,3 +1,4 @@
+import { Socket } from "socket.io-client";
 import { SafeUser, IServer, IChannel } from "../types";
 
 export const useGlobalStore = defineStore('global', {
@@ -6,7 +7,8 @@ export const useGlobalStore = defineStore('global', {
 		activeServerType: '' as "dms" | "servers" | undefined,
 		user: {} as SafeUser,
 		dms: [] as IChannel[],
-		servers: [] as IServer[]
+		servers: [] as IServer[],
+		socket: null as unknown
 	}),
 	actions: {
 		setUser(user: SafeUser) {
@@ -25,6 +27,9 @@ export const useGlobalStore = defineStore('global', {
 		},
 		setDms(dms: Array<IChannel>) {
 			this.dms = dms
+		},
+		setSocket(socket: Socket) {
+			this.socket = socket
 		},
 		setActive(type: "servers" | "dms", channelId: string) {
 			if (channelId === '@me') {
@@ -50,5 +55,11 @@ export const useGlobalStore = defineStore('global', {
 
 			this.activeServer = this.servers[activeServerIndex]
 		},
+		logout() {
+			this.dms = []
+			this.servers = []
+			this.socket = null
+			this.activeServer = {} as IServer | IChannel
+		}
 	},
 })

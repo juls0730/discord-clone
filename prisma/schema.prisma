@@ -65,13 +65,13 @@ model InviteCode {
   expiryDate DateTime?
   maxUses    Int       @default(0)
   serverId   String
-  Message    Message?  @relation(fields: [messageId], references: [id])
+  message    Message?  @relation(fields: [messageId], references: [id])
   messageId  String?
 }
 
 model Session {
   id     String @id @default(cuid())
-  token  String
+  token  String @unique
   userId String
   user   User   @relation(fields: [userId], references: [id])
 }

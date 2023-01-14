@@ -18,6 +18,7 @@
 import { Nav, Sidebar } from '~/.nuxt/components'
 import { useGlobalStore } from '~/stores/store'
 import { SafeUser } from '~/types'
+import { io } from 'socket.io-client'
 
 export default {
 	data() {
@@ -42,17 +43,21 @@ export default {
 
 			globalStore.setServers(servers)
 			globalStore.setDms(dms)
-			console.log('params', route.params.id)
 			if (route.params.id && typeof route.params.id === 'string') {
 				globalStore.setActive(route.path.includes('@me') ? 'dms' : 'servers', route.params.id)
 			}
-
-			const server = globalStore.activeServer
-
-			return {
-				server
-			}
 		}
+	},
+	mounted() {
+		const globalStore = useGlobalStore()
+		const sessionToken = useCookie('sessionToken')
+		const socket = io({
+			auth: (cb) => {
+				cb({ token: sessionToken.value })
+			}
+		});
+
+		globalStore.setSocket(socket)
 	}
 }
 </script>

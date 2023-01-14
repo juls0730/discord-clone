@@ -62,8 +62,17 @@ export default defineEventHandler(async (event) => {
 			dmParticipants: { connect: [{ id: event.context.user.id }, { id: partner.id }] },
 			DM: true
 		},
-		include: {
-			dmParticipants: true
+		select: {
+			id: true,
+			name: true,
+			messages: false,
+			DM: true,
+			dmParticipants: {
+				select: {
+					id: true,
+					username: true
+				}
+			}
 		}
 	}) as IChannel
 

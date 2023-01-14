@@ -26,7 +26,14 @@ export default defineEventHandler(async (event) => {
 			name: true,
 			server: {
 				select: {
-					id: true
+					id: true,
+					name: true,
+					participants: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
 				}
 			},
 			messages: {
@@ -41,12 +48,16 @@ export default defineEventHandler(async (event) => {
 					},
 					invites: {
 						select: {
-							id: true, 
+							id: true,
 							server: {
 								select: {
 									id: true,
 									name: true,
-									participants: true
+									participants: {
+										select: {
+											id: true
+										}
+									}
 								}
 							}
 						}

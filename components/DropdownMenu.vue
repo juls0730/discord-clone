@@ -23,8 +23,7 @@ export default {
 	transform-origin: bottom center;
 }
 
-.dropdown-inverse > ul {
-	display: flex;
+.dropdown-inverse > div > ul {
 	flex-direction: column-reverse;
 }
 

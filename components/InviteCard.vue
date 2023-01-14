@@ -1,5 +1,5 @@
 <template>
-	<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] p-4 rounded-md shadow-md mr-2">
+	<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
 		<p class="text-sm font-semibold text-zinc-100">You've been invited to join a
 			server</p>
 		<span class="text-xl font-bold capitalize leading-loose">{{ invite.server.name }}</span>
@@ -47,6 +47,7 @@ export default {
 			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id }, headers })
 			if (!server) return;
 			this.servers?.push(server)
+			this.invite.server.participants.push(this.user)
 		},
 	}
 }

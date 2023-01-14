@@ -7,7 +7,7 @@
 					:to="'/channel/@me/' + dm.id">
 					<div
 						class="mx-2 my-4 hover:bg-[hsl(223,calc(1*6.9%),25.8%)] px-2 py-2 w-[calc(240px-1rem)] max-h-10 h-10 overflow-ellipsis rounded-md transition-colors">
-						{{ (dm.name).split('-').find((e: string) => e !== user.id) }}
+						{{ dm.dmParticipants.find((e) => e.id !== user.id).username }}
 					</div>
 				</nuxt-link>
 			</div>
@@ -55,7 +55,10 @@
 						<ul class="flex flex-col gap-y-1">
 							<DropdownItem v-if="userIsOwner || userIsAdmin"
 								@click="createInvite">
-								<span class="mr-1.5 h-fit">
+								<span>
+									Invite a friend
+								</span>
+								<span class="h-fit">
 									<svg xmlns="http://www.w3.org/2000/svg"
 										width="20"
 										height="20"
@@ -71,9 +74,6 @@
 											<path d="M3 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2m1-10h6m-3-3v6" />
 										</g>
 									</svg>
-								</span>
-								<span>
-									Invite a friend
 								</span>
 							</DropdownItem>
 						</ul>
@@ -102,7 +102,8 @@
 					@click="openCreateChannelModel"
 					class="flex text-center hover:bg-[hsl(223,calc(1*6.9%),26.4%)] px-2 py-1.5 w-full transition-colors rounded drop-shadow-sm cursor-pointer items-center">
 					<span>
-						<svg class="text-zinc-300/80 my-auto" xmlns="http://www.w3.org/2000/svg"
+						<svg class="text-zinc-300/80 my-auto"
+							xmlns="http://www.w3.org/2000/svg"
 							width="20"
 							height="20"
 							viewBox="0 0 24 24">
@@ -127,6 +128,9 @@
 					<ul class="flex flex-col gap-y-1">
 						<DropdownItem v-if="userIsOwner || userIsAdmin"
 							@click="createInvite">
+							<span>
+								Invite a friend
+							</span>
 							<span class="mr-1.5 h-fit">
 								<svg xmlns="http://www.w3.org/2000/svg"
 									width="20"
@@ -144,8 +148,26 @@
 									</g>
 								</svg>
 							</span>
+						</DropdownItem>
+						<DropdownItem @click="logout" danger="true">
 							<span>
-								Invite a friend
+								Logout
+							</span>
+							<span class="mr-1.5 h-fit">
+								<svg xmlns="http://www.w3.org/2000/svg"
+									width="20"
+									height="20"
+									viewBox="0 0 24 24">
+									<g fill="none"
+										stroke="currentColor"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										stroke-width="2">
+										<path
+											d="M14 8V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2-2v-2" />
+										<path d="M7 12h14l-3-3m0 6l3-3" />
+									</g>
+								</svg>
 							</span>
 						</DropdownItem>
 					</ul>
@@ -206,9 +228,10 @@
 
 <script lang="ts">
 import { useGlobalStore } from '~/stores/store';
-import { IChannel, IRole, IServer } from '~/types';
+import { IChannel, IRole } from '~/types';
 
 export default {
+	props: ['server'],
 	data() {
 		return {
 			server: storeToRefs(useGlobalStore()).activeServer,
@@ -251,6 +274,14 @@ export default {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>
 			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST', headers })
 		},
+		async logout() {
+			await $fetch(`/api/user/logout`)
+			useCookie('sessionToken').value = null;
+			useCookie('userId').value = null;
+
+			useGlobalStore().logout();
+			navigateTo('/login')
+		}
 	},
 }
 </script>

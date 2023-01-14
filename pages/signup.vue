@@ -48,7 +48,7 @@ export default {
 	},
 	methods: {
 		async signup() {
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>
+			const globalStore = useGlobalStore();
 			if (!this.username || !this.password || !this.email) return;
 			const user = await $fetch('/api/signup', {
 				method: 'post', body: {
@@ -56,13 +56,18 @@ export default {
 					email: this.email,
 					password: this.password
 				},
-				headers
 			}) as { userId: string; token: string; user: SafeUser; }
 
 			const userId = useCookie('userId')
 			userId.value = user.userId
 			const token = useCookie('sessionToken')
 			token.value = user.token
+
+			const headers = { Cookie: `sessionToken=${token.value}`}
+			const { servers, dms } = await $fetch('/api/user/getServers', { headers })
+
+			globalStore.setServers(servers)
+			globalStore.setDms(dms)
 
 			useGlobalStore().setUser(user.user)
 

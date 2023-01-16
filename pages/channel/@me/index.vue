@@ -20,7 +20,7 @@ export default {
 		}
 	},
 	mounted() {
-		useGlobalStore().setActive('dms', '@me')
+		useGlobalStore().setActiveServer('dms', '@me')
 	},
 	methods: {
 		async startDM() {

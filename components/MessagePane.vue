@@ -36,39 +36,23 @@
 					</svg>
 				</span>
 				<span class="text-zinc-100 font-semibold">{{
-					server.dmParticipants.find((e: IUser) => e.id !==
-						user.id).username
+					server.dmParticipants?.find((e: SafeUser) => e.id !== user.id)?.username
 				}}</span>
 			</div>
 		</div>
 		<div class="w-full h-[calc(100%-76px-48px)] top-[48px] absolute overflow-y-scroll pb-1"
 			id="conversation-pane">
 			<div>
-				<div v-if="conversation.length === 0">
+				<div v-if="server.messages.length === 0">
 					<p>No messages yet</p>
 				</div>
 				<div v-else
-					v-for="(message, i) in conversation">
-					<div class="transition-[backdrop-filter] hover:backdrop-brightness-110 ease-[cubic-bezier(.37,.64,.59,.33)] duration-150 my-4 px-7 py-2"
-						:class="(i === 0 || conversation[i - 1].creator.id !== message.creator.id) ?
-	(i === conversation.length - 1 || conversation[i + 1].creator.id !== message.creator.id) ?
-						/* above and below message is not ours */ '' :
-						/* below message is ours */ 'mb-0 pb-0.5' :
-	(i === conversation.length - 1 || conversation[i + 1].creator.id !== message.creator.id) ?
-						/* above message is ours */ 'mt-0 pt-0.5 pb-1' :
-						/* above and below message is ours */ 'mt-0 mb-0 py-0.5'">
-						<div>
-							<div class="message-sender-text">
-								<p class="mb-1 font-semibold"
-									v-if="i === 0 || conversation[i - 1].creator.id !== message.creator.id">
-									{{ message.creator.username }}
-								</p>
-								<p class="break-words max-w-full">{{ message.body }}</p>
-							</div>
-							<div v-for="invite in message.invites">
-								<InviteCard :invite="invite" />
-							</div>
-						</div>
+					v-for="(message, i) in server.messages"
+					class="relative">
+					<div class="transition-[backdrop-filter] hover:backdrop-brightness-90 ease-[cubic-bezier(.37,.64,.59,.33)] duration-150 my-4 px-7 py-2 group"
+						:class="calculateMessageClasses(message, i)">
+						<Message :message="message"
+							:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
 					</div>
 				</div>
 			</div>
@@ -135,26 +119,25 @@
 <script lang="ts">
 import { Server } from 'socket.io';
 import { useGlobalStore } from '~/stores/store';
-import { IMessage, IUser } from '~/types';
+import { IChannel, IMessage, IUser, SafeUser } from '~/types';
 
 export default {
-	props: ['server'],
 	data() {
 		return {
 			user: storeToRefs(useGlobalStore()).user,
+			server: storeToRefs(useGlobalStore()).activeChannel,
 			messageContent: '',
-			conversation: this.server.messages as IMessage[],
 			canSendNotifications: false,
 			servers: storeToRefs(useGlobalStore()).servers,
 			usersTyping: [] as string[],
 			socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
 			showSearch: false,
-			searchResults: [] as IUser[],
-			search: ''
+			searchResults: [] as SafeUser[],
+			search: '',
 		}
 	},
 	mounted() {
-		const route = useRoute()
+		if (!this.user) throw new Error('User not found, but sessionToken cookie is set')
 
 		Notification.requestPermission().then((result) => {
 			const permission = (result === 'granted') ? true : false
@@ -165,80 +148,37 @@ export default {
 		if (!conversationDiv) throw new Error('conversation div not found')
 		this.scrollToBottom()
 
-		this.socket.on(`message-${route.params.id}`, (ev: { message: IMessage }) => {
-			const { message } = ev
-			if (message.creator.id === this.user.id) return;
-			if (!document.hasFocus()) {
-				new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: route.params.id });
-			}
-
-			const mentions = message.body.match(/<@([a-z]|[0-9]){25}>/g);
-
-			if (mentions) {
-				const participants = (this.server.DM) ? this.server.dmParticipants : this.server.participants;
-				mentions.forEach((e: string) => {
-					if (!e) return
-					const id = e.split('<@')[1]?.split('>')[0];
-					if (!id) return;
-					const user = participants.find((e) => e.id === id)
-					message.body = message.body.split(e).join(`@${user.username}`)
-				});
-			}
-			this.conversation.push(message)
-
-			const lastElementChild = conversationDiv.children[0]?.lastElementChild
-			if (!lastElementChild) return;
-
-			setTimeout(() => {
-				if (conversationDiv.scrollTop + 20 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
-				conversationDiv.scrollTop = conversationDiv.scrollHeight;
-			})
-		});
-
-		let timeout: NodeJS.Timeout;
-		this.socket.on(`typing-${route.params.id}`, (ev: string) => {
-			if (ev === this.user.username) return;
-			clearTimeout(timeout)
-			timeout = setTimeout(() => {
-				this.usersTyping = this.usersTyping.filter(username => username !== ev)
-			}, 750);
-			if (this.usersTyping.includes(ev)) return;
-			this.usersTyping.push(ev);
-		})
-	},
-	unmounted() {
-		this.socket.removeAllListeners();
+		this.listenToWebsocket(conversationDiv)
 	},
 	methods: {
 		async sendMessage() {
-			const route = useRoute()
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			if (!this.messageContent) return;
 
-			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: route.params.id }, headers })
+			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: this.server.id }, headers })
 
 			if (!message) return;
-			if (this.conversation.includes(message)) return;
+			if (this.server.messages.includes(message)) return;
 
 			const mentions = message.body.match(/<@([a-z]|[0-9]){25}>/g);
 
 			if (mentions) {
 				const participants = (this.server.DM) ? this.server.dmParticipants : this.server.server.participants;
-				console.log(participants)
+				if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`)
 				mentions.forEach((e: string) => {
 					if (!e) return
 					const id = e.split('<@')[1]?.split('>')[0];
 					if (!id) return;
 					const user = participants.find((e) => e.id === id)
+					if (!user) return;
 					message.body = message.body.split(e).join(`@${user.username}`)
-					console.log(id)
 				});
 			}
-			this.conversation.push(message)
-			console.log('sent')
+			this.server.messages.push(message)
 			this.messageContent = '';
 			const conversationDiv = document.getElementById('conversation-pane');
 			if (!conversationDiv) throw new Error('wtf');
+
 			setTimeout(() => {
 				conversationDiv.scrollTop = conversationDiv.scrollHeight;
 			})
@@ -262,8 +202,23 @@ export default {
 			if (event.ctrlKey) {
 				return
 			}
-			const route = useRoute()
-			this.socket.emit(`typing`, route.params.id);
+
+			this.socket.emit(`typing`, this.server.id);
+		},
+		calculateMessageClasses(message: IMessage, i: number) {
+			if (i === 0 || this.server.messages[i - 1]?.creator.id !== message.creator.id) {
+				if (i !== this.server.messages.length - 1 || this.server.messages[i + 1]?.creator.id === message.creator.id) {
+					return 'mb-0 pb-0.5';
+				}
+			} else {
+				if (i !== this.server.messages.length - 1 || this.server.messages[i + 1]?.creator.id === message.creator.id) {
+					return 'mt-0 mb-0 py-0.5';
+				} else {
+					return 'mt-0 pt-0.5 pb-1';
+				}
+			}
+
+			return '';
 		},
 		checkForMentions() {
 			const input = document.getElementById('messageBox') as HTMLTextAreaElement;
@@ -278,13 +233,21 @@ export default {
 					participants = this.server.server.participants
 				}
 
-				this.search = this.messageContent.split(' ')[this.messageContent.substring(0, startPosition).split(' ').length - 1].slice(1);
+				if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`)
+
+				const search = this.messageContent.split(' ')[this.messageContent.substring(0, startPosition).split(' ').length - 1]?.slice(1);
+				if (!search) return
+
+				this.search = search;
 				if (this.search.length === 0) {
 					this.showSearch = false
 					return;
 				}
 
-				const results = participants.filter((e: IUser) => e.username.includes(this.search)).sort((a: IUser, b: IUser) => {
+				const maxResults = Math.floor(document.body.clientHeight / 48 + 8) - 6
+				let results = participants.filter((e: SafeUser) => e.username.includes(this.search))
+
+				results.sort((a: SafeUser, b: SafeUser) => {
 					const usernameA = a.username.toLowerCase();
 					const usernameB = b.username.toLowerCase();
 
@@ -296,6 +259,10 @@ export default {
 						return 0
 					}
 				})
+
+				if (results.length > maxResults) {
+					results.length = maxResults
+				}
 
 				if (results.length === 0) {
 					this.showSearch = false;
@@ -313,11 +280,68 @@ export default {
 			if (cursorPos === 0) return false;
 			return this.inMention(cursorPos - 1)
 		},
-		completeMention(user: IUser) {
+		completeMention(user: SafeUser) {
 			this.messageContent = this.messageContent.replace('@' + this.search, `<@${user.id}>`)
 			this.showSearch = false;
 			document.getElementById('messageBox')?.focus()
-		}
+		},
+		listenToWebsocket(conversationDiv: HTMLElement) {
+			this.socket.removeAllListeners();
+
+			this.socket.on(`message-${this.server.id}`, (ev: { message: IMessage }) => {
+				const { message } = ev
+
+				const mentions = message.body.match(/<@([a-z]|[0-9]){25}>/g);
+
+				if (mentions) {
+					const participants = (this.server.DM) ? this.server.dmParticipants : this.server.server.participants;
+					if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`)
+					mentions.forEach((e: string) => {
+						if (!e) return
+						const id = e.split('<@')[1]?.split('>')[0];
+						if (!id) return;
+						const user = participants.find((e) => e.id === id)
+						if (!user) return;
+						message.body = message.body.split(e).join(`@${user.username}`)
+					});
+				}
+
+				if (this.server.messages.find((e) => e.id === message.id)) {
+					// message is already in the server, replace it with the updated message
+					console.log(message.id, message)
+					useGlobalStore().updateMessage(message.id, message)
+					return;
+				}
+
+				if (message.creator.id === this.user.id) return;
+
+
+				if (!document.hasFocus()) {
+					new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: this.server.id.toString() });
+				}
+
+				this.server.messages.push(message)
+
+				const lastElementChild = conversationDiv.children[0]?.lastElementChild
+				if (!lastElementChild) return;
+
+				setTimeout(() => {
+					if (conversationDiv.scrollTop + 20 < (conversationDiv.scrollHeight - conversationDiv.clientHeight) - lastElementChild.clientHeight) return;
+					conversationDiv.scrollTop = conversationDiv.scrollHeight;
+				})
+			});
+
+			let timeout: NodeJS.Timeout;
+			this.socket.on(`typing-${this.server.id}`, (ev: string) => {
+				if (ev === this.user.username) return;
+				clearTimeout(timeout)
+				timeout = setTimeout(() => {
+					this.usersTyping = this.usersTyping.filter(username => username !== ev)
+				}, 750);
+				if (this.usersTyping.includes(ev)) return;
+				this.usersTyping.push(ev);
+			})
+		},
 		// resizeTextarea() {
 		// 	const textArea = document.getElementById('messageBox')
 		// 	const textBox = document.getElementById('textBox')
@@ -342,19 +366,5 @@ export default {
 	margin-bottom: 0.5rem;
 	background-color: hsl(220, calc(1 * 7.7%), 22.9%);
 	bottom: calc(0px - 0.5rem);
-}
-
-.message-container {
-	transition: backdrop-filter 150ms cubic-bezier(.37, .64, .59, .33);
-	margin-top: 0.35rem;
-	margin-bottom: 0.35rem;
-	padding-left: 1.75rem;
-	padding-right: 1.75rem;
-	padding-top: 0.5rem;
-	padding-bottom: 0.5rem;
-}
-
-.message-container:hover {
-	backdrop-filter: brightness(1.15);
 }
 </style>

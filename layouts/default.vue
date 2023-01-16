@@ -44,7 +44,7 @@ export default {
 			globalStore.setServers(servers)
 			globalStore.setDms(dms)
 			if (route.params.id && typeof route.params.id === 'string') {
-				globalStore.setActive(route.path.includes('@me') ? 'dms' : 'servers', route.params.id)
+				globalStore.setActiveServer(route.path.includes('@me') ? 'dms' : 'servers', route.params.id)
 			}
 		}
 	},

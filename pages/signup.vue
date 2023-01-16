@@ -63,15 +63,19 @@ export default {
 			const token = useCookie('sessionToken')
 			token.value = user.token
 
-			const headers = { Cookie: `sessionToken=${token.value}`}
-			const { servers, dms } = await $fetch('/api/user/getServers', { headers })
+			setTimeout(async () => {
+				const headers = { Cookie: `sessionToken=${token.value}` }
+				const { servers, dms } = await $fetch('/api/user/getServers', { headers })
 
-			globalStore.setServers(servers)
-			globalStore.setDms(dms)
+				if (!servers || !dms) return;
 
-			useGlobalStore().setUser(user.user)
+				globalStore.setServers(servers)
+				globalStore.setDms(dms)
 
-			navigateTo('/channel/@me')
+				globalStore.setUser(user.user)
+
+				navigateTo('/channel/@me')
+			})
 		}
 	}
 }

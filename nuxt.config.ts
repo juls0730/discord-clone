@@ -1,7 +1,7 @@
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 
 export default {
-    ssr: true,
+    ssr: false,
     app: {
         head: {
             meta: [
@@ -35,6 +35,7 @@ export default {
                 ],
             },
         ],
+        '@vueuse/nuxt',
     ],
 
     typescript: {

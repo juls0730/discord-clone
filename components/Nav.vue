@@ -34,7 +34,7 @@
 		</div>
 		<div class="overflow-y-scroll my-2 flex gap-y-2 flex-col">
 			<nuxt-link v-for="server in servers"
-				:to="'/channel/' + server.channels[0].id">
+				:to="'/channel/' + server.channels[0]?.id">
 				<div :key="server.id"
 					class="bg-zinc-600/80 p-3 rounded-full transition-all hover:rounded-2xl ease-in-out hover:bg-zinc-500/60 duration-300 h-[56px] w-[56px]">
 					<svg width="32"

@@ -14,12 +14,16 @@
     "pinia": "^2.0.28",
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.5.4",
+    "twemoji": "^14.0.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
     "@nuxt/kit": "^3.0.0",
     "@types/bcryptjs": "^2.4.2",
+    "@types/twemoji": "^13.1.2",
     "@types/uuid": "^9.0.0",
+    "@vueuse/core": "^9.10.0",
+    "@vueuse/nuxt": "^9.10.0",
     "autoprefixer": "^10.4.13",
     "postcss": "^8.4.20",
     "prisma": "^4.8.0",

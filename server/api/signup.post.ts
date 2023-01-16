@@ -45,6 +45,21 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			username: true,
+			servers: {
+				participants: {
+					select: {
+						id: true,
+						username: true
+					}
+				},
+				channels: {
+					select: {
+						id: true,
+						DM: true,
+						name: true,
+					}
+				},
+			}
 		},
 	}) as unknown as IUser
 

@@ -14,8 +14,6 @@ export default defineEventHandler(async (event) => {
 		}
 	}
 
-
-
 	let user = await prisma.user.findFirst({
 		where: {
 			username: body.username

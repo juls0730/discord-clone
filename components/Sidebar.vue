@@ -1,13 +1,13 @@
 <template>
 	<aside
 		class="bg-[hsl(223,calc(1*6.9%),19.8%)] min-w-60 w-60 h-screen shadow-sm text-white select-none grid grid-rows-[93.5%_1fr] relative z-[2]">
-		<div v-if="serverType === 'dms' || !server.id">
+		<div v-if="serverType === 'dms' || !server">
 			<div>
 				<nuxt-link v-for="dm in dms"
 					:to="'/channel/@me/' + dm.id">
 					<div
 						class="mx-2 my-4 hover:bg-[hsl(223,calc(1*6.9%),25.8%)] px-2 py-2 w-[calc(240px-1rem)] max-h-10 h-10 overflow-ellipsis rounded-md transition-colors">
-						{{ dm.dmParticipants.find((e) => e.id !== user.id).username }}
+						{{ dm.dmParticipants?.find((e) => e.id !== user.id)?.username }}
 					</div>
 				</nuxt-link>
 			</div>
@@ -231,7 +231,6 @@ import { useGlobalStore } from '~/stores/store';
 import { IChannel, IRole } from '~/types';
 
 export default {
-	props: ['server'],
 	data() {
 		return {
 			server: storeToRefs(useGlobalStore()).activeServer,
@@ -262,7 +261,7 @@ export default {
 
 			if (!channel) return;
 
-			this.server.channels?.push(channel)
+			useGlobalStore().addChannel(this.server.id, channel);
 			this.createChannelModelOpen = false;
 		},
 		openChannel(id: string) {

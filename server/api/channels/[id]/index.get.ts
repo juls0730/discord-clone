@@ -33,7 +33,55 @@ export default defineEventHandler(async (event) => {
 							id: true,
 							username: true
 						}
-					}
+					},
+					channels: {
+						select: {
+							id: true,
+							DM: true,
+							name: true,
+							messages: {
+								select: {
+									id: true,
+									body: true,
+									creator: {
+										select: {
+											id: true,
+											username: true
+										}
+									},
+									invites: {
+										select: {
+											id: true,
+											server: {
+												select: {
+													id: true,
+													name: true,
+													participants: {
+														select: {
+															id: true
+														}
+													}
+												}
+											}
+										}
+									},
+									reactions: {
+										select: {
+											id: true,
+											emoji: true,
+											count: true,
+											users: {
+												select: {
+													id: true,
+													username: true
+												}
+											}
+										}
+									}
+								}
+							}
+						}
+					},
 				}
 			},
 			messages: {
@@ -58,6 +106,19 @@ export default defineEventHandler(async (event) => {
 											id: true
 										}
 									}
+								}
+							}
+						}
+					},
+					reactions: {
+						select: {
+							id: true,
+							emoji: true,
+							count: true,
+							users: {
+								select: {
+									id: true,
+									username: true
 								}
 							}
 						}
@@ -92,6 +153,8 @@ export default defineEventHandler(async (event) => {
 				roles: true
 			}
 		}) as IServer | null;
+
+		if (!server) return;
 
 		const userInServer: Array<SafeUser> | undefined = server?.participants.filter((e: SafeUser) => e.id === event.context.user.id)
 

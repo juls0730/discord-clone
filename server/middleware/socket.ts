@@ -17,7 +17,6 @@ export default defineEventHandler(({ node }) => {
         return;
       }
 
-      console.time()
       const { user } = await prisma.session.findFirst({
         where: {
           token
@@ -87,7 +86,6 @@ export default defineEventHandler(({ node }) => {
           }
         }
       }) as { user: IUser } | null;
-      console.timeEnd();
 
       if (!user) {
         return;

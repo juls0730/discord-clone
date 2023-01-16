@@ -61,8 +61,69 @@ export default defineEventHandler(async (event) => {
 					id: server.id
 				}
 			}
+		},
+		select: {
+			id: true,
+			name: true,
+			server: {
+				select: {
+					id: true,
+					name: true,
+					participants: {
+						select: {
+							id: true,
+							username: true
+						}
+					},
+					channels: {
+						select: {
+							id: true,
+							DM: true,
+							name: true
+						}
+					},
+				}
+			},
+			messages: {
+				select: {
+					id: true,
+					body: true,
+					creator: {
+						select: {
+							id: true,
+							username: true
+						}
+					},
+					invites: {
+						select: {
+							id: true,
+							server: {
+								select: {
+									id: true,
+									name: true,
+									participants: {
+										select: {
+											id: true
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			},
+			DM: true,
+			dmParticipants: {
+				select: {
+					id: true,
+					username: true
+				}
+			},
+			serverId: true,
 		}
 	}) as IChannel
+
+	global.io.emit(`addChannel-${server.id}`, channel)
 
 	return channel
 })

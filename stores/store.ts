@@ -1,8 +1,11 @@
+import { channel } from "diagnostics_channel";
+import { serve } from "esbuild";
 import { Socket } from "socket.io-client";
-import { SafeUser, IServer, IChannel } from "../types";
+import { SafeUser, IServer, IChannel, IMessage } from "../types";
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
+		activeChannel: {} as IChannel,
 		activeServer: {} as IServer | IChannel,
 		activeServerType: '' as "dms" | "servers" | undefined,
 		user: {} as SafeUser,
@@ -11,27 +14,7 @@ export const useGlobalStore = defineStore('global', {
 		socket: null as unknown
 	}),
 	actions: {
-		setUser(user: SafeUser) {
-			this.user = user;
-		},
-		addServer(server: IServer) {
-			if (!this.servers || this.servers.find((e) => e.id === server.id)) return;
-			this.servers.push(server)
-		},
-		addDM(dmChannel: IChannel) {
-			if (!this.dms || this.dms.find((e) => e.id === dmChannel.id)) return;
-			this.dms.push(dmChannel)
-		},
-		setServers(servers: Array<IServer>) {
-			this.servers = servers
-		},
-		setDms(dms: Array<IChannel>) {
-			this.dms = dms
-		},
-		setSocket(socket: Socket) {
-			this.socket = socket
-		},
-		setActive(type: "servers" | "dms", channelId: string) {
+		setActiveServer(type: "servers" | "dms", channelId: string) {
 			if (channelId === '@me') {
 				this.activeServer = {} as IServer | IChannel
 				this.activeServerType = 'dms'
@@ -42,24 +25,71 @@ export const useGlobalStore = defineStore('global', {
 
 			const searchableArray: IChannel[] | IServer[] | undefined = this[type]
 			if (!searchableArray) return;
-			let activeServerIndex: number;
+			let activeServer: number;
 			if (type === 'servers') {
-				activeServerIndex = searchableArray.findIndex((e) => {
+				activeServer = searchableArray.find((e) => {
 					return e.channels.some((channel: IChannel) => channel.id === channelId)
 				})
 			} else {
-				activeServerIndex = searchableArray.findIndex((e) => {
+				activeServer = searchableArray.find((e) => {
 					return e.id === channelId
 				})
 			}
 
-			this.activeServer = this.servers[activeServerIndex]
+			this.activeServer = activeServer
+		},
+		setActiveChannel(channel: IChannel) {
+			this.activeChannel = channel;
+		},
+		updateServer(channelId: string, server: IServer) {
+			const serverIndex = this.servers.findIndex(s => s.channels.some((c) => c.id === channelId))
+			this.servers[serverIndex] = server
+		},
+		setServers(servers: Array<IServer>) {
+			this.servers = servers
+		},
+		addChannel(serverId: string, channel: IChannel) {
+			const serverIndex = this.servers.findIndex(s => s.id === serverId)
+			const server = this.servers[serverIndex]
+			if (serverIndex < 0 || !server) return;
+			if (server.channels.find((c) => c.id === channel.id)) return;
+			server.channels.push(channel)
+		},
+		addDM(dmChannel: IChannel) {
+			if (this.dms.find((e) => e.id === dmChannel.id)) {
+				const index = this.dms.findIndex((e) => e.id === dmChannel.id)
+				this.dms[index] = dmChannel
+				return;
+			}
+			this.dms.push(dmChannel)
+		},
+		addServer(server: IServer) {
+			if (this.servers.find((e) => e.id === server.id)) {
+				const index = this.servers.findIndex((e) => e.id === server.id)
+				this.servers[index] = server
+				return;
+			}
+			this.servers.push(server)
+		},
+		setDms(dms: Array<IChannel>) {
+			this.dms = dms
+		},
+		setSocket(socket: Socket) {
+			this.socket = socket
+		},
+		setUser(user: SafeUser) {
+			this.user = user;
+		},
+		updateMessage(messageId: string, message: IMessage) {
+			const messageIndex = this.activeChannel.messages.findIndex((e) => e.id === messageId)
+			if (messageIndex < 0) return;
+			this.activeChannel.messages[messageIndex] = message
 		},
 		logout() {
 			this.dms = []
 			this.servers = []
 			this.socket = null
-			this.activeServer = {} as IServer | IChannel
+			this.activeServer = {} as IChannel
 		}
 	},
 })

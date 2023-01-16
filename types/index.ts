@@ -6,6 +6,7 @@ export interface IUser {
 	servers?: Array<IServer>;
 	channels?: Array<IChannel>;
 	roles?: Array<IRole>;
+	createdAt: Date;
 }
 
 export type SafeUser = Omit<Omit<IUser, 'passwordhash'>, 'email'>
@@ -23,7 +24,7 @@ export interface IChannel {
 	id: string;
 	name: string;
 	server: IServer;
-	messages?: Array<IMessage>
+	messages: Array<IMessage>
 	DM: boolean;
 	dmParticipants?: Array<SafeUser>;
 	serverId: string;
@@ -37,6 +38,9 @@ export interface IMessage {
 	userId: string;
 	channelId: string;
 	invites?: IInviteCode[];
+	reactions?: IReaction[];
+	createdAt: Date;
+	updatedAt: Date;
 }
 
 export interface IInviteCode {
@@ -58,4 +62,17 @@ export interface IRole {
 	users: IUser[];
 	server?: IServer;
 	serverId?: string;
+}
+
+export interface IReaction {
+	id: string;
+	emoji: {
+		name: string;
+		id?: string;
+	};
+	count: number;
+	previousCount?: number;
+	users: IUser[];
+	Message: IMessage;
+	messageId: string;
 }

@@ -47,13 +47,10 @@
 					<p>No messages yet</p>
 				</div>
 				<div v-else
-					v-for="(message, i) in server.messages"
-					class="relative">
-					<div class="transition-[backdrop-filter] hover:backdrop-brightness-90 ease-[cubic-bezier(.37,.64,.59,.33)] duration-150 my-4 px-7 py-2 group"
-						:class="calculateMessageClasses(message, i)">
-						<Message :message="message"
-							:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
-					</div>
+					v-for="(message, i) in server.messages" class="relative message-wrapper">
+					<Message :message="message"
+						:classes="calculateMessageClasses(message, i)"
+						:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
 				</div>
 			</div>
 		</div>
@@ -67,17 +64,18 @@
 				</div>
 			</div>
 		</div>
-		<div class="conversation-input w-[calc(100vw-88px-240px)] h-[75px]">
+		<div class="conversation-input w-[calc(100vw-88px-240px)] h-fit">
 			<form @keyup="checkForMentions"
 				@keypress="typing($event)"
 				@submit.prevent="sendMessage"
 				@keydown.enter.exact.prevent="sendMessage"
 				class="relative px-4 w-full pt-1.5 h-fit pb-1">
 				<div id="textbox"
-					class="px-4 rounded-md w-full h-[44px] bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
+					class="px-4 rounded-md w-full min-h-[44px] h-fit bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
 					<textarea type="text"
 						id="messageBox"
-						class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed"
+						class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed h-[44px]"
+						cols="1"
 						v-model="messageContent"
 						placeholder="Send a Message..." />
 					<input type="submit"
@@ -96,7 +94,7 @@
 								d="M10 14L21 3m0 0l-6.5 18a.55.55 0 0 1-1 0L10 14l-7-3.5a.55.55 0 0 1 0-1L21 3" />
 						</svg></label>
 				</div>
-				<div class="w-full">
+				<div class="w-full h-4">
 					<p class="text-sm"
 						v-if="usersTyping.length > 0">
 						<span v-if="usersTyping.length < 4">
@@ -119,7 +117,7 @@
 <script lang="ts">
 import { Server } from 'socket.io';
 import { useGlobalStore } from '~/stores/store';
-import { IChannel, IMessage, IUser, SafeUser } from '~/types';
+import { IMessage, SafeUser } from '~/types';
 
 export default {
 	data() {
@@ -155,25 +153,13 @@ export default {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			if (!this.messageContent) return;
 
-			const message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: this.server.id }, headers })
+			let message: IMessage = await $fetch(`/api/channels/sendMessage`, { method: 'post', body: { body: this.messageContent, channelId: this.server.id }, headers })
 
 			if (!message) return;
 			if (this.server.messages.includes(message)) return;
 
-			const mentions = message.body.match(/<@([a-z]|[0-9]){25}>/g);
+			message.body = parseMessageBody(message.body, useGlobalStore().activeChannel)
 
-			if (mentions) {
-				const participants = (this.server.DM) ? this.server.dmParticipants : this.server.server.participants;
-				if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`)
-				mentions.forEach((e: string) => {
-					if (!e) return
-					const id = e.split('<@')[1]?.split('>')[0];
-					if (!id) return;
-					const user = participants.find((e) => e.id === id)
-					if (!user) return;
-					message.body = message.body.split(e).join(`@${user.username}`)
-				});
-			}
 			this.server.messages.push(message)
 			this.messageContent = '';
 			const conversationDiv = document.getElementById('conversation-pane');
@@ -289,27 +275,15 @@ export default {
 			this.socket.removeAllListeners();
 
 			this.socket.on(`message-${this.server.id}`, (ev: { message: IMessage }) => {
-				const { message } = ev
+				let { message } = ev
 
-				const mentions = message.body.match(/<@([a-z]|[0-9]){25}>/g);
-
-				if (mentions) {
-					const participants = (this.server.DM) ? this.server.dmParticipants : this.server.server.participants;
-					if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`)
-					mentions.forEach((e: string) => {
-						if (!e) return
-						const id = e.split('<@')[1]?.split('>')[0];
-						if (!id) return;
-						const user = participants.find((e) => e.id === id)
-						if (!user) return;
-						message.body = message.body.split(e).join(`@${user.username}`)
-					});
-				}
+				message.body = parseMessageBody(message.body, useGlobalStore().activeChannel)
 
 				if (this.server.messages.find((e) => e.id === message.id)) {
 					// message is already in the server, replace it with the updated message
-					console.log(message.id, message)
+					console.log(message.id, message.body)
 					useGlobalStore().updateMessage(message.id, message)
+					console.log('raw', useGlobalStore().activeChannel.messages.find((e) => e.id === message.id)?.body)
 					return;
 				}
 
@@ -345,11 +319,11 @@ export default {
 		// resizeTextarea() {
 		// 	const textArea = document.getElementById('messageBox')
 		// 	const textBox = document.getElementById('textBox')
-		// 	var taLineHeight = 26; // This should match the line-height in the CSS
-		// 	var taHeight = textArea.scrollHeight; // Get the scroll height of the textarea
+		// 	const taLineHeight = 26; // This should match the line-height in the CSS
+		// 	const taHeight = textArea.scrollHeight; // Get the scroll height of the textarea
+		// 	if (!taHeight) taHeight = 44;
 		// 	textArea.style.height = taHeight + 'px'; // This line is optional, I included it so you can more easily count the lines in an expanded textarea
-		// 	textBox.style.height = taHeight + 'px'; 
-		// 	var numberOfLines = Math.floor(taHeight / taLineHeight);
+		// 	const numberOfLines = Math.floor(taHeight / taLineHeight);
 		// 	console.log("there are " + numberOfLines + " lines in the text area");
 		// 	console.log('a')
 		// }

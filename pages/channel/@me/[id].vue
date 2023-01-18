@@ -1,5 +1,5 @@
 <template>
-	<MessagePane :server="server" />
+	<MessagePane />
 </template>
 
 <script lang="ts">
@@ -22,23 +22,8 @@ export default {
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?')
 		useGlobalStore().setActiveServer('dms', route.params.id);
 
-		function parseBody(body: string) {
-			const mentions = body.match(/<@([a-z]|[0-9]){25}>/g);
-			if (mentions) {
-				mentions.forEach((e: string) => {
-					if (!e) return
-					const id = e.split('<@')[1]?.split('>')[0];
-					if (!id) return;
-					const user = server.dmParticipants?.find((e) => e.id === id)
-					if (!user) return;
-					body = body.split(e).join(`@${user.username}`)
-				});
-			}
-			return body
-		}
-
 		server.messages?.forEach((e) => {
-			e.body = parseBody(e.body)
+			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel)
 		})
 
 		useGlobalStore().setActiveChannel(server)

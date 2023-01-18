@@ -1,6 +1,6 @@
 import { IChannel, IServer, SafeUser } from '~/types'
+import emojiRegex from 'emoji-regex'
 import { PrismaClient } from '@prisma/client'
-import { node } from 'unenv'
 const prisma = new PrismaClient()
 
 export default defineEventHandler(async (event) => {
@@ -12,23 +12,14 @@ export default defineEventHandler(async (event) => {
 	}
 
 	const emoji = decodeURIComponent(event.context.params.name)
-
-	if (emoji.length !== 2) {
+	const match = emoji.match(emojiRegex());
+	if (!match || match.length !== 1) {
 		event.node.res.statusCode = 400;
 		return {
 			message: 'reaction is not an emoji or more than one emoji.'
 		}
 	}
-	
-	const first = emoji.charCodeAt(0);
-	const second = emoji.charCodeAt(1);
 
-	if (!((first >= 0xD800 && first <= 0xDBFF) && (second >= 0xDC00 && second <= 0xDFFF))) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'reaction is not an emoji or more than one emoji.'
-		}
-	}
 
 	const messageSelect = {
 		id: true,

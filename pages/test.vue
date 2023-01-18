@@ -1,21 +1,14 @@
-<script setup lang="ts">
-import { io } from 'socket.io-client'
-
-const connected = ref(false)
-
-onMounted(() => {
-  const socket = io();
-
-  socket.on('connect', () => {
-    connected.value = socket.connected
-  });
-
-  socket.on('disconnect', () => {
-    connected.value = socket.connected
-  });
-})
-</script>
-
 <template>
-  <div>Connected: {{ connected }}</div>
+  <span class="test"></span>
 </template>
+
+<style>
+.test {
+  background: url(/32.png);
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  background-position: -544px -510px;
+  background-size: 6480% 6480%;
+}
+</style>

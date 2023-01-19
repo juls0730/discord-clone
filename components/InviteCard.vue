@@ -1,11 +1,11 @@
 <template>
-	<div class="w-6/12 bg-[hsl(223,6.9%,19.8%)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
+	<div class="w-6/12 bg-[var(--primary-500)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
 		<p class="text-sm font-semibold text-zinc-100">You've been invited to join a
 			server</p>
 		<span class="text-xl font-bold capitalize leading-loose">{{ invite.server.name }}</span>
 		<div class="flex items-center">
 			<span
-				class="before:bg-[hsl(214,9.9%,50.4%)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"></span>
+				class="before:bg-[var(--invite-members)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"></span>
 			<span>{{ invite.server.participants.length }} Members</span>
 		</div>
 		<div class="flex w-full justify-end">

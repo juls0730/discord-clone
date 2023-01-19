@@ -1,6 +1,7 @@
 import { IChannel } from "~/types";
 
 export default function parseBody(body: string, activeChannel: IChannel) {
+	if (!activeChannel.id) throw new Error("No active channel")
 	body = escape(body);
 	const rules = [
 		//bold, italics and paragragh rules
@@ -18,14 +19,14 @@ export default function parseBody(body: string, activeChannel: IChannel) {
 		body = body.replace(rule, template);
 	})
 
-	const mentions = body.match(/<@([a-z]|[0-9]){25}>/g);
+	const mentions = body.match(/&#60;&#64;([a-z]|[0-9]){25}&#62;/g);
 
 	if (mentions) {
 		const participants = (activeChannel.DM) ? activeChannel.dmParticipants : activeChannel.server.participants;
 		if (!participants) throw new Error(`participants in channel "${activeChannel.id}" not found"`)
 		mentions.forEach((e: string) => {
 			if (!e) return
-			const id = e.split('<@')[1]?.split('>')[0];
+			const id = e.split('&#60;&#64;')[1]?.split('&#62;')[0];
 			if (!id) return;
 			const user = participants.find((e) => e.id === id)
 			if (!user) return;

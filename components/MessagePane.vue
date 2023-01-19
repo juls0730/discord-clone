@@ -1,6 +1,6 @@
 <template>
-	<div class="h-full bg-[hsl(220,calc(1*7.7%),22.9%)] relative text-white">
-		<div class="bg-[hsl(220,calc(1*7.7%),22.9%)] absolute w-full shadow px-4 py-3 z-[1] shadow-zinc-900/50">
+	<div class="h-full relative text-white bg-[var(--background-color)] grid grid-rows-[48px_1fr]">
+		<div class="w-full px-4 py-3 z-[1]">
 			<div v-if="!server.DM"
 				class="flex items-center">
 				<span class="mr-1">
@@ -40,77 +40,82 @@
 				}}</span>
 			</div>
 		</div>
-		<div class="w-full h-[calc(100%-76px-48px)] top-[48px] absolute overflow-y-scroll pb-1"
-			id="conversation-pane">
-			<div>
-				<div v-if="server.messages.length === 0">
-					<p>No messages yet</p>
+
+		<section
+			class="bg-[var(--foreground-color)] my-3 mx-1 h-[calc(100%-24px)] overflow-hidden rounded-lg relative grid grid-rows-[1fr_70px]">
+			<div class="h-full overflow-y-scroll" id="conversation-pane">
+				<div class="w-full pb-1 bg-inherit">
+					<div>
+						<div v-if="server.messages.length === 0">
+							<p>No messages yet</p>
+						</div>
+						<Message v-else
+							v-for="(message, i) in server.messages"
+							:message="message"
+							:classes="calculateMessageClasses(message, i)"
+							:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
+					</div>
 				</div>
-				<div v-else
-					v-for="(message, i) in server.messages" class="relative message-wrapper">
-					<Message :message="message"
-						:classes="calculateMessageClasses(message, i)"
-						:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
+				<div v-if="showSearch"
+					class="absolute bottom-[calc(75px+0.5rem)] mx-4 w-[calc(100vw-88px-240px-32px)] py-3 px-4 bg-[var(--primary-500)] rounded-lg shadow-md z-5">
+					<div class="relative flex flex-col">
+						<div v-for="user in searchResults"
+							class="mx-2 my-1 w-[calc(100vw-88px-240px-64px-16px)] px-4 py-3 hover:backdrop-brightness-125 select-none rounded-md transition-all"
+							@click="completeMention(user)">
+							{{ user.username }}
+						</div>
+					</div>
 				</div>
 			</div>
-		</div>
-		<div v-if="showSearch"
-			class="absolute bottom-[calc(75px+0.5rem)] mx-4 w-[calc(100vw-88px-240px-32px)] py-3 px-4 bg-[hsl(223,6.9%,19.8%)] rounded-lg shadow-md z-5">
-			<div class="relative flex flex-col">
-				<div v-for="user in searchResults"
-					class="mx-2 my-1 w-[calc(100vw-88px-240px-64px-16px)] px-4 py-3 hover:bg-[hsl(223,6.9%,24.3%)] select-none rounded-md transition-colors"
-					@click="completeMention(user)">
-					{{ user.username }}
-				</div>
-			</div>
-		</div>
-		<div class="conversation-input w-[calc(100vw-88px-240px)] h-fit">
-			<form @keyup="checkForMentions"
-				@keypress="typing($event)"
-				@submit.prevent="sendMessage"
-				@keydown.enter.exact.prevent="sendMessage"
-				class="relative px-4 w-full pt-1.5 h-fit pb-1">
-				<div id="textbox"
-					class="px-4 rounded-md w-full min-h-[44px] h-fit bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] flex flex-row">
-					<textarea type="text"
-						id="messageBox"
-						class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed h-[44px]"
-						cols="1"
-						v-model="messageContent"
-						placeholder="Send a Message..." />
-					<input type="submit"
-						class="absolute -top-full -left-full invisible"
-						id="submit">
-					<label for="submit"
-						class="py-1 px-1.5 h-fit my-auto cursor-pointer"
-						role="button"><svg width="32"
-							height="32"
-							viewBox="0 0 24 24">
-							<path fill="none"
-								stroke="currentColor"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								stroke-width="2"
-								d="M10 14L21 3m0 0l-6.5 18a.55.55 0 0 1-1 0L10 14l-7-3.5a.55.55 0 0 1 0-1L21 3" />
-						</svg></label>
-				</div>
-				<div class="w-full h-4">
-					<p class="text-sm"
-						v-if="usersTyping.length > 0">
-						<span v-if="usersTyping.length < 4">
-							<span v-for="(username, i) in usersTyping"
-								class="font-semibold">
-								<span v-if="i === usersTyping.length - 1 && usersTyping.length > 1">and </span>
-								{{ username }}
-								<span v-if="i !== usersTyping.length - 1 && usersTyping.length > 1">, </span>
+
+			<div class="flex absolute flex-row bottom-0 w-full h-fit bg-inherit mb-1">
+				<form @keyup="checkForMentions"
+					@keypress="typing($event)"
+					@submit.prevent="sendMessage"
+					@keydown.enter.exact.prevent="sendMessage"
+					class="relative px-4 w-full pt-1.5 h-fit pb-1">
+					<div id="textbox"
+						class="px-4 rounded-md w-full min-h-[44px] h-fit bg-[var(--message-input-color)] placeholder:text-[var(--primary-placeholder)] flex flex-row">
+						<textarea type="text"
+							id="messageBox"
+							class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed h-[44px]"
+							cols="1"
+							v-model="messageContent"
+							placeholder="Send a Message..." />
+						<input type="submit"
+							class="absolute -top-full -left-full invisible"
+							id="submit">
+						<label for="submit"
+							class="py-1 px-1.5 h-fit my-auto cursor-pointer"
+							role="button"><svg width="32"
+								height="26"
+								viewBox="0 0 24 24">
+								<path fill="none"
+									stroke="currentColor"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="2"
+									d="M10 14L21 3m0 0l-6.5 18a.55.55 0 0 1-1 0L10 14l-7-3.5a.55.55 0 0 1 0-1L21 3" />
+							</svg></label>
+					</div>
+					<div class="w-full h-4">
+						<p class="text-sm"
+							v-if="usersTyping.length > 0">
+							<span v-if="usersTyping.length < 4">
+								<span v-for="(username, i) in usersTyping"
+									class="font-semibold">
+									<span v-if="i === usersTyping.length - 1 && usersTyping.length > 1">and </span>
+									{{ username }}
+									<span v-if="i !== usersTyping.length - 1 && usersTyping.length > 1">, </span>
+								</span>
+								is typing
 							</span>
-							is typing
-						</span>
-						<span v-else>Several users are typing</span>
-					</p>
-				</div>
-			</form>
-		</div>
+							<span v-else>Several users are typing</span>
+						</p>
+					</div>
+				</form>
+			</div>
+		</section>
 	</div>
 </template>
 
@@ -274,8 +279,13 @@ export default {
 		listenToWebsocket(conversationDiv: HTMLElement) {
 			this.socket.removeAllListeners();
 
-			this.socket.on(`message-${this.server.id}`, (ev: { message: IMessage }) => {
-				let { message } = ev
+			this.socket.on(`message-${this.server.id}`, (ev: { message: IMessage, deleted?: boolean }) => {
+				let { message, deleted } = ev
+
+				if (deleted) {
+					useGlobalStore().removeMessage(message.id)
+					return;
+				}
 
 				message.body = parseMessageBody(message.body, useGlobalStore().activeChannel)
 
@@ -330,15 +340,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.conversation-input {
-	display: flex;
-	position: fixed;
-	flex-direction: row;
-	margin-top: 0.5rem;
-	margin-bottom: 0.5rem;
-	background-color: hsl(220, calc(1 * 7.7%), 22.9%);
-	bottom: calc(0px - 0.5rem);
-}
-</style>

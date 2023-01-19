@@ -1,6 +1,6 @@
 <template>
 	<Transition name="pop-in">
-		<div ref="dropdown" class="z-[2] absolute m-2 bg-[hsl(225,7.7%,10.2%)] w-[calc(100%-1rem)] p-3 rounded text-left"
+		<div ref="dropdown" class="z-[2] absolute m-2 bg-[var(--primary-dark)] w-[calc(100%-1rem)] p-3 rounded text-left"
 		:class="(inverted) ? 'dropdown-inverse' : 'dropdown'"
 			v-if="opened">
 			<slot />

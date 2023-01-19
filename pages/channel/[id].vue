@@ -48,12 +48,11 @@ export default {
 		useGlobalStore().addServer(realServer);
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
 		useGlobalStore().setActiveServer('servers', route.params.id)
+		useGlobalStore().setActiveChannel(server)
 
 		server.messages?.forEach((e) => {
 			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel)
 		})
-
-		useGlobalStore().setActiveChannel(server)
 
 		return {
 			server,

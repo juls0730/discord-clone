@@ -85,6 +85,10 @@ export const useGlobalStore = defineStore('global', {
 			if (messageIndex < 0) return;
 			this.activeChannel.messages[messageIndex] = message
 		},
+		removeMessage(messageId: string) {
+			if (!this.activeChannel.messages.find(m => m.id === messageId)) return;
+			this.activeChannel.messages = this.activeChannel.messages.filter(m => m.id !== messageId)
+		},
 		logout() {
 			this.dms = []
 			this.servers = []

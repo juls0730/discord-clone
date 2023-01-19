@@ -1,3 +1,25 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+	--background-color: hsl(230,28%,7.3%);
+	--foreground-color: hsl(230,26%,13%);
+	--primary-accent: hsl(180,55%,45%);
+	--message-input-color: hsl(228,27.3%,25%);
+	--primary-placeholder: hsl(180,25%,65%);
+
+
+	--primary-dark: hsl(225, 7.7%, 10.2%); /* dropdown and emoji picker bg */
+	--primary-700: hsl(230,31.2%,6.3%); /* code block border */
+	--primary-600: hsl(220, 6.8%, 17.3%); /* modal bg */
+	--primary-500: hsl(230,28.7%,9.8%); /* reaction button bg, code block, and inline code bg */
+	--primary-400: hsl(230, 12%, 19.2%); /* action buttons */
+	--primary-300: hsl(230,26%,15%); /* nav button bg */
+	--primary-200: hsl(230,26%,21.3%); /* nav button hover bg */
+	--primary-text: hsl(216, 3.7%, 73.5%); /* main text color (duh) */
+	--reaction-border: hsl(230,33.4%,18.7%); /* reaction border on hover */
+	--reaction-hover: hsl(230,31.2%,12.5%); /* reaction bg on hover */
+	--invite-members: var(--primary-accent); /* color of dot next to server members count on invites */
+	--primary-danger: hsl(359, 66.7%, 54.1%);
+}

@@ -42,11 +42,11 @@ export default {
 
 <template>
 	<div v-if="opened"
-		class="rounded-lg shadow-md p-3 z-10 bg-[hsl(223,6.8%,19.8%)]">
+		class="rounded-lg shadow-md p-3 z-10 bg-[var(--primary-dark)]">
 		<div class="py-1.5 flex flex-col">
 			<div class="flex-row gap-x-2 overflow-x-scroll">
 				<button @click="scrollTo('people')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -62,7 +62,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('nature')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -76,7 +76,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('food')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -90,7 +90,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('activities')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -107,7 +107,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('travel')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -121,7 +121,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('objects')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -139,7 +139,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('symbols')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -157,7 +157,7 @@ export default {
 					</svg>
 				</button>
 				<button @click="scrollTo('flags')"
-					class="p-1.5 hover:bg-[hsl(223,6.8%,25.3%)] rounded-md transition-colors">
+					class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="24"
 						height="24"
@@ -175,15 +175,15 @@ export default {
 
 		<div class="max-w-[375px] max-h-[450px] overflow-hidden overflow-y-scroll scroll-smooth EmojiPicker"
 			id="emoji-pane">
-			<div class="text-black flex flex-col category"
+			<div class="text-black flex flex-col category bg-[var(--primary-dark)]"
 				v-for="category in categories">
-				<h6 class="uppercase text-[hsl(216,3.7%,73.5%)] sticky top-0 bg-[hsl(223,6.8%,19.8%)] py-1">{{
+				<h6 class="uppercase text-[var(--primary-text)] sticky top-0 bg-inherit z-10 py-1">{{
 					category.name
 				}}</h6>
 				<div class="flex flex-wrap"
 					:id="category.name">
 					<button v-for="emoji in category.emojis"
-						class="p-2 rounded hover:bg-[hsl(223,6.8%,28.4%)] h-12 transition-colors emoji"
+						class="p-2 rounded bg-inherit hover:backdrop-brightness-[1.45] h-12 transition-all emoji"
 						@click="$emit('pickedEmoji', emoji.short_name)"
 						:aria-label='emoji.name.toLowerCase()'>
 						<span :style="emojiStyles(emoji.short_name, 32)"

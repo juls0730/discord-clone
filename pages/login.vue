@@ -6,12 +6,12 @@
 			<form class="flex flex-col gap-y-2 my-2"
 				@submit.prevent="signup()">
 				<input
-					class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] focus:outline-none"
+					class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
 					name="username"
 					v-model="username"
 					placeholder="username" />
 				<input
-					class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[hsl(218,calc(1*4.6%),46.9%)] focus:outline-none"
+					class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
 					name="password"
 					type="password"
 					v-model="password"

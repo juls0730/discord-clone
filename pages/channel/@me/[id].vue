@@ -21,12 +21,11 @@ export default {
 		useGlobalStore().addDM(server);
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?')
 		useGlobalStore().setActiveServer('dms', route.params.id);
+		useGlobalStore().setActiveChannel(server)
 
 		server.messages?.forEach((e) => {
 			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel)
 		})
-
-		useGlobalStore().setActiveChannel(server)
 
 		return {
 			server

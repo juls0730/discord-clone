@@ -17,6 +17,12 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			username: true,
+			friends: {
+				select: {
+					id: true,
+					username: true,
+				}
+			}
 		}
 	}) as SafeUser | null;
 

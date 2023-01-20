@@ -76,3 +76,13 @@ export interface IReaction {
 	Message: IMessage;
 	messageId: string;
 }
+
+export interface IEmojiPickerData {
+	opened: boolean;
+	top: number;
+	right: number;
+	openedBy: {
+		type: "message" | "messageInput";
+		messageId?: string;
+	};
+}

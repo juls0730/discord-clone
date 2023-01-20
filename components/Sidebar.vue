@@ -10,7 +10,7 @@
 			</section>
 
 			<div
-				class="h-[calc(100%-24px)] my-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg">
+				class="h-[calc(100%-12px)] mb-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg">
 				<div class="h-fit">
 					<nuxt-link v-for="dm in dms"
 						:to="'/channel/@me/' + dm.id">
@@ -95,7 +95,7 @@
 
 
 			<div
-				class="h-[calc(100%-24px)] my-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg">
+				class="h-[calc(100%-12px)] mb-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg">
 				<div class="flex gap-y-1.5 px-1.5 mt-2 flex-col overflow-x-scroll">
 					<button
 						class="flex text-center bg-inherit hover:backdrop-brightness-[1.35] px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
@@ -221,11 +221,11 @@
 
 	<div v-if="createChannelModelOpen"
 		class="absolute z-10 top-0 bottom-0 left-0 right-0">
-		<div class="bg-[var(--primary-600)] w-screen h-screen"
+		<div class="bg-black/70 w-screen h-screen"
 			@click="createChannelModelOpen = false">
 		</div>
 		<div
-			class="p-4 z-20 absolute bg-zinc-800 shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
+			class="p-4 z-20 absolute bg-[var(--primary-500)] shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
 			<h2 class="font-semibold text-xl">
 				Create a channel:
 			</h2>
@@ -234,10 +234,10 @@
 					class="w-3/5">
 					<input v-model="channelName"
 						type="text"
-						class="py-2 px-3 rounded-md mb-2 bg-zinc-700 shadow-md border border-zinc-700/80"
+						class="py-2 px-3 rounded-md mb-2 bg-[var(--message-input-color)] shadow-md"
 						placeholder="Channel name" />
 					<input type="submit"
-						class="py-2 px-3 rounded-md bg-zinc-700 shadow-md border border-zinc-700/80" />
+						class="py-2 px-3 rounded-md bg-[var(--message-input-color)] shadow-md" />
 				</form>
 			</div>
 		</div>

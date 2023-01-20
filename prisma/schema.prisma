@@ -1,34 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
+model User {
+  id                     String          @id @default(cuid())
+  email                  String          @unique
+  username               String          @unique
+  passwordhash           String
+  createdAt              DateTime        @default(now())
+  messages               Message[]
+  session                Session[]
+  channels               Channel[]       @relation("ChannelToUser")
+  Reactions              Reaction[]      @relation("ReactionToUser")
+  roles                  Role[]          @relation("RoleToUser")
+  servers                Server[]        @relation("ServerToUser")
+  incomingFriendRequests friendRequest[] @relation("FriendRequestToUser")
+  outgoingFriendRequests friendRequest[] @relation("UserToFriendRequest")
+  friends                User[]          @relation("UserToFriends")
+
+  // This second "side" of the UserFriends relation exists solely 
+  // to satisfy prisma's requirements; we won't access it directly.
+  symmetricFriends User[] @relation("UserToFriends")
 }
 
-model User {
-  id           String     @id @default(cuid())
-  email        String     @unique
-  username     String     @unique
-  passwordhash String
-  servers      Server[]
-  messages     Message[]
-  session      Session[]
-  channels     Channel[]
-  roles        Role[]
-  createdAt    DateTime   @default(now())
-  Reactions    Reaction[]
+model friendRequest {
+  id          String @id @default(cuid())
+  sender      User   @relation(fields: [senderId], references: [id], name: "UserToFriendRequest")
+  recipient   User   @relation(fields: [recipientId], references: [id], name: "FriendRequestToUser")
+  senderId    String
+  recipientId String
+  status      String @default("sent")
 }
 
 model Server {
   id           String       @id @default(cuid())
   name         String
-  participants User[]
-  channels     Channel[]
-  roles        Role[]
-  InviteCode   InviteCode[]
   createdAt    DateTime     @default(now())
+  channels     Channel[]
+  InviteCode   InviteCode[]
+  roles        Role[]
+  participants User[]       @relation("ServerToUser")
 }
 
 model Role {
@@ -36,43 +52,43 @@ model Role {
   name          String
   administrator Boolean @default(false)
   owner         Boolean @default(false)
-  users         User[]
-  server        Server? @relation(fields: [serverId], references: [id])
   serverId      String?
+  server        Server? @relation(fields: [serverId], references: [id])
+  users         User[]  @relation("RoleToUser")
 }
 
 model Channel {
   id             String    @id @default(cuid())
   name           String
-  server         Server?   @relation(fields: [serverId], references: [id])
   serverId       String?
-  messages       Message[]
   DM             Boolean   @default(false)
-  dmParticipants User[]
+  server         Server?   @relation(fields: [serverId], references: [id])
+  messages       Message[]
+  dmParticipants User[]    @relation("ChannelToUser")
 }
 
 model Message {
   id        String       @id @default(cuid())
   body      String
-  channel   Channel      @relation(fields: [channelId], references: [id])
-  creator   User         @relation(fields: [userId], references: [id])
   userId    String
   channelId String
-  invites   InviteCode[]
-  reactions Reaction[]
   createdAt DateTime     @default(now())
   updatedAt DateTime     @updatedAt
+  invites   InviteCode[]
+  channel   Channel      @relation(fields: [channelId], references: [id])
+  creator   User         @relation(fields: [userId], references: [id])
+  reactions Reaction[]
 }
 
 model InviteCode {
   id         String    @id @default(cuid())
-  server     Server    @relation(fields: [serverId], references: [id])
   expires    Boolean   @default(false)
   expiryDate DateTime?
   maxUses    Int       @default(0)
   serverId   String
-  message    Message?  @relation(fields: [messageId], references: [id])
   messageId  String?
+  message    Message?  @relation(fields: [messageId], references: [id])
+  server     Server    @relation(fields: [serverId], references: [id])
 }
 
 model Session {
@@ -82,16 +98,11 @@ model Session {
   user   User   @relation(fields: [userId], references: [id])
 }
 
-model ExpiredSession {
-  id    String @id @default(cuid())
-  token String
-}
-
 model Reaction {
   id        String   @id @default(cuid())
   emoji     Json
   count     Int
-  users     User[]
-  Message   Message? @relation(fields: [messageId], references: [id])
   messageId String?
+  Message   Message? @relation(fields: [messageId], references: [id])
+  users     User[]   @relation("ReactionToUser")
 }

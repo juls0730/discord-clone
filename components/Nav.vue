@@ -81,7 +81,7 @@
 	<div v-if="createServerModelOpen"
 		class="absolute z-10 top-0 bottom-0 left-0 right-0">
 		<div
-			class="p-4 z-20 absolute bg-[var(--primary-600)] shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
+			class="p-4 z-20 absolute bg-[var(--primary-500)] shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white">
 			<h2 class="font-semibold text-xl">
 				Create a server:
 			</h2>
@@ -90,14 +90,14 @@
 					class="w-3/5">
 					<input v-model="serverName"
 						type="text"
-						class="py-2 px-3 rounded-md mb-2 bg-zinc-700 shadow-md border border-zinc-700/80"
+						class="py-2 px-3 rounded-md mb-2 bg-[var(--message-input-color)] shadow-md placeholder:text-[var(--primary-placeholder)]"
 						placeholder="Server name" />
 					<input type="submit"
-						class="py-2 px-3 rounded-md bg-zinc-700 shadow-md border border-zinc-700/80" />
+						class="py-2 px-3 rounded-md bg-[var(--message-input-color)] shadow-md" />
 				</form>
 			</div>
 		</div>
-		<div class="bg-zinc-900/80 w-screen h-screen"
+		<div class="bg-black/70 w-screen h-screen"
 			@click="createServerModelOpen = false">
 		</div>
 	</div>

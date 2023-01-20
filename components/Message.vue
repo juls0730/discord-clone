@@ -1,17 +1,11 @@
 <template>
 	<div class="relative message-wrapper"
-		@mouseenter="mouseEnter()"
-		@mouseleave="mouseLeave()">
+		@mouseleave="overflowShown = false">
 		<div class="absolute right-0 mr-10 -top-[20px] h-fit opacity-0 pointer-events-none action-buttons z-[5]"
 			:class="(emojiPickerOpen) ? 'opacity-100 pointer-events-auto' : ''">
-			<div class="absolute top-0 w-[375px]"
-				:style="emojiPickerStyles">
-				<EmojiPicker v-on:pickedEmoji="pickedEmoji($event)"
-					:opened="emojiPickerOpen" />
-			</div>
-			<div id="actions"
+			<div :id="`actions-${message.id}`"
 				class="relative bg-[var(--primary-400)] rounded-md border border-[rgb(32,34,37)] text-[var(--primary-text)] flex overflow-hidden">
-				<button @click="emojiPickerOpen = !emojiPickerOpen"
+				<button @click="openEmojiPicker()"
 					class="p-1 hover:backdrop-brightness-125 transition-all flex w-fit h-fit">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="20"
@@ -25,8 +19,8 @@
 							d="m13 19l-1 1l-7.5-7.428A5 5 0 1 1 12 6.006a5 5 0 0 1 8.003 5.996M14 16h6m-3-3v6" />
 					</svg>
 				</button>
-				<button v-if="!actionButtonOverflowMenuOpen"
-					@click="actionButtonOverflowMenuOpen = true"
+				<button v-if="!shiftPressed && !overflowShown"
+					@click="overflowShown = true"
 					class="p-1 hover:backdrop-brightness-125 transition-all flex w-fit h-fit">
 					<svg xmlns="http://www.w3.org/2000/svg"
 						width="20"
@@ -49,8 +43,7 @@
 						</g>
 					</svg>
 				</button>
-				<div @click="actionButtonOverflowMenuOpen = false"
-					v-if="actionButtonOverflowMenuOpen"
+				<div v-if="shiftPressed || overflowShown"
 					class="flex">
 					<button @click="copy(message.id)"
 						class="p-1 hover:backdrop-brightness-125 transition-all flex text-[var(--primary-400)] w-[28px] h-[28px] items-center justify-center">
@@ -118,7 +111,7 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { IMessage } from '~/types';
+import { IEmojiPickerData, IMessage } from '~/types';
 import { useGlobalStore } from '~/stores/store';
 import { useClipboard } from '@vueuse/core'
 import emojiJson from '~/assets/json/emoji.json';
@@ -133,6 +126,10 @@ export default {
 			type: Boolean,
 			required: true
 		},
+		shiftPressed: {
+			type: Boolean,
+			required: true
+		},
 		classes: {
 			type: String,
 			required: true
@@ -142,8 +139,7 @@ export default {
 		return {
 			user: storeToRefs(useGlobalStore()).user,
 			emojiPickerOpen: false,
-			emojiPickerStyles: this.calculateEmojiPickerRight(),
-			actionButtonOverflowMenuOpen: false,
+			overflowShown: false
 		}
 	},
 	setup() {
@@ -153,6 +149,16 @@ export default {
 			copy
 		}
 	},
+	mounted() {
+		const { $listen } = useNuxtApp()
+		$listen('pickedEmoji', (emoji) => {
+			if (useGlobalStore().emojiPickerData.openedBy.messageId !== this.message.id) return;
+			const replacementEmoji = emojiJson.find((e) => e.short_name === emoji);
+			if (!replacementEmoji?.emoji) return;
+			if (this.message.reactions?.find((e) => e.emoji.name === replacementEmoji.emoji)) return
+			this.toggleReaction(replacementEmoji.emoji)
+		});
+	},
 	methods: {
 		async toggleReaction(emoji: string) {
 			const route = useRoute()
@@ -161,6 +167,25 @@ export default {
 			message.body = parseMessageBody(message.body, useGlobalStore().activeChannel)
 
 			useGlobalStore().updateMessage(this.message.id, message)
+		},
+		openEmojiPicker() {
+			const actionButtons = document.getElementById(`actions-${this.message.id}`);
+			if (!actionButtons) return;
+
+			const elementRect = actionButtons.getBoundingClientRect();
+			let top = elementRect.top + window.pageYOffset;
+
+			if (top + 522 > window.innerHeight) top = window.innerHeight - 522;
+
+			const payload = {
+				top,
+				right: actionButtons.clientWidth + 40,
+				openedBy: {
+					type: "message",
+					messageId: this.message.id
+				}
+			} as IEmojiPickerData
+			useGlobalStore().toggleEmojiPicker(payload)
 		},
 		emojiStyles(emoji: string, width: number) {
 			const emojis = emojiJson.filter((e) => e.has_img_twitter)
@@ -179,44 +204,10 @@ export default {
 				'background-size': '1037px 1037px'
 			}
 		},
-		pickedEmoji(emoji: string) {
-			const replacementEmoji = emojiJson.find((e) => e.short_name === emoji);
-			if (!replacementEmoji?.emoji) return;
-			if (this.message.reactions?.find((e) => e.emoji.name === replacementEmoji.emoji)) return
-			this.toggleReaction(replacementEmoji.emoji)
-			this.emojiPickerOpen = false;
-		},
 		async deleteMessage() {
 			const route = useRoute()
 			await $fetch(`/api/channels/${route.params.id}/messages/${this.message.id}/delete`, { method: "POST" })
 		},
-		calculateEmojiPickerRight() {
-			const actions = document.getElementById('actions')
-			if (!actions) return {}
-			const right = actions.clientWidth + 8
-			return {
-				right: right + 'px'
-			}
-		},
-		keyPressed(ev: KeyboardEvent) {
-			if (ev.key === 'Shift') {
-				this.actionButtonOverflowMenuOpen = true
-			}
-		},
-		keyUnpressed(ev: KeyboardEvent) {
-			if (ev.key === 'Shift') {
-				this.actionButtonOverflowMenuOpen = false
-			}
-		},
-		mouseEnter() {
-			document.body.addEventListener('keydown', this.keyPressed, false);
-			document.body.addEventListener('keyup', this.keyUnpressed, false);
-		},
-		mouseLeave() {
-			this.actionButtonOverflowMenuOpen = false
-			document.body.removeEventListener('keydown', this.keyPressed, false)
-			document.body.removeEventListener('keyup', this.keyUnpressed, false)
-		}
 	}
 }
 </script>

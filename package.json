@@ -12,6 +12,7 @@
     "bcryptjs": "^2.4.3",
     "emoji-datasource-twitter": "^14.0.0",
     "emoji-regex": "^10.2.1",
+    "mitt": "^3.0.0",
     "nuxt": "^3.0.0",
     "pinia": "^2.0.28",
     "socket.io": "^4.5.4",

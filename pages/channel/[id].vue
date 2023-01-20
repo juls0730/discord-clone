@@ -1,5 +1,12 @@
 <template>
 	<MessagePane />
+	<div class="fixed mr-3"
+		:style="`top: ${emojiPickerData.top}px; right: ${emojiPickerData.right}px`">
+		<Transition>
+			<EmojiPicker v-on:pickedEmoji="pickedEmoji($event)"
+				:opened="emojiPickerData.opened" />
+		</Transition>
+	</div>
 </template>
 
 <script lang="ts">
@@ -15,6 +22,11 @@ export default {
 	data() {
 		return {
 			socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
+			emojiPickerData: storeToRefs(useGlobalStore()).emojiPickerData,
+			emojiPickerStyles: {
+				top: storeToRefs(useGlobalStore()).emojiPickerData.top + 'px',
+				right: storeToRefs(useGlobalStore()).emojiPickerData.right + 'px',
+			}
 		}
 	},
 	mounted() {
@@ -31,7 +43,8 @@ export default {
 		this.server = await $fetch(`/api/channels/${route.params.id}`, { headers });
 
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
-		if (useGlobalStore().activeServer.id !== this.server.id) {
+		if (useGlobalStore().activeChannel.id !== this.server.id) {
+			useGlobalStore().closeEmojiPicker()
 			useGlobalStore().setActiveServer('servers', route.params.id)
 			// update the server with the refreshed data
 			useGlobalStore().updateServer(route.params.id, this.server.server)
@@ -49,6 +62,7 @@ export default {
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?')
 		useGlobalStore().setActiveServer('servers', route.params.id)
 		useGlobalStore().setActiveChannel(server)
+		useGlobalStore().closeEmojiPicker()
 
 		server.messages?.forEach((e) => {
 			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel)
@@ -58,5 +72,12 @@ export default {
 			server,
 		}
 	},
+	methods: {
+		pickedEmoji(emoji: string) {
+			const { $emit } = useNuxtApp()
+			$emit('pickedEmoji', emoji)
+			useGlobalStore().closeEmojiPicker()
+		},
+	}
 }
 </script>

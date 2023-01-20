@@ -1,7 +1,7 @@
 import { channel } from "diagnostics_channel";
 import { serve } from "esbuild";
 import { Socket } from "socket.io-client";
-import { SafeUser, IServer, IChannel, IMessage } from "../types";
+import { SafeUser, IServer, IChannel, IMessage, IEmojiPickerData } from "../types";
 
 export const useGlobalStore = defineStore('global', {
 	state: () => ({
@@ -11,6 +11,7 @@ export const useGlobalStore = defineStore('global', {
 		user: {} as SafeUser,
 		dms: [] as IChannel[],
 		servers: [] as IServer[],
+		emojiPickerData: {} as IEmojiPickerData,
 		socket: null as unknown
 	}),
 	actions: {
@@ -88,6 +89,33 @@ export const useGlobalStore = defineStore('global', {
 		removeMessage(messageId: string) {
 			if (!this.activeChannel.messages.find(m => m.id === messageId)) return;
 			this.activeChannel.messages = this.activeChannel.messages.filter(m => m.id !== messageId)
+		},
+		openEmojiPicker(payload: IEmojiPickerData) {
+			this.emojiPickerData.top = payload.top;
+			this.emojiPickerData.right = payload.right;
+			this.emojiPickerData.openedBy = payload.openedBy;
+			this.emojiPickerData.opened = true;
+		},
+		toggleEmojiPicker(payload: IEmojiPickerData) {
+			let messageId;
+			if (this.emojiPickerData.openedBy === undefined) {
+				messageId = null
+			} else {
+				messageId = this.emojiPickerData.openedBy.messageId || null
+			}
+
+			console.log(!this.emojiPickerData.opened || payload.openedBy.messageId !== messageId, this.emojiPickerData.opened, payload.openedBy.messageId, messageId)
+
+			if (!this.emojiPickerData.opened || payload.openedBy.messageId !== messageId) {
+				this.openEmojiPicker(payload)
+			} else {
+				this.closeEmojiPicker()
+			}
+		},
+		closeEmojiPicker() {
+			console.log('closeEmojiPicker')
+			if (this.emojiPickerData.openedBy) this.emojiPickerData.openedBy.messageId = '';
+			this.emojiPickerData.opened = false;
 		},
 		logout() {
 			this.dms = []

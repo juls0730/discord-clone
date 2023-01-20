@@ -1,5 +1,5 @@
 <template>
-	<div class="h-full relative text-white bg-[var(--background-color)] grid grid-rows-[48px_1fr]">
+	<div class="h-full relative text-white bg-[var(--background-color)] grid grid-rows-[48px_1fr]" @mouseenter="mouseEnter" @mouseleave="mouseLeave">
 		<div class="w-full px-4 py-3 z-[1]">
 			<div v-if="!server.DM"
 				class="flex items-center">
@@ -42,7 +42,7 @@
 		</div>
 
 		<section
-			class="bg-[var(--foreground-color)] my-3 mx-1 h-[calc(100%-24px)] overflow-hidden rounded-lg relative grid grid-rows-[1fr_70px]">
+			class="bg-[var(--foreground-color)] mb-3 mx-1 h-[calc(100%-12px)] overflow-hidden rounded-lg relative grid grid-rows-[1fr_70px]">
 			<div class="h-full overflow-y-scroll" id="conversation-pane">
 				<div class="w-full pb-1 bg-inherit">
 					<div>
@@ -52,8 +52,9 @@
 						<Message v-else
 							v-for="(message, i) in server.messages"
 							:message="message"
-							:classes="calculateMessageClasses(message, i)"
-							:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id" />
+							:shiftPressed="shiftPressed"
+							:showUsername="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id"
+							:classes="calculateMessageClasses(message, i)" />
 					</div>
 				</div>
 				<div v-if="showSearch"
@@ -131,6 +132,7 @@ export default {
 			server: storeToRefs(useGlobalStore()).activeChannel,
 			messageContent: '',
 			canSendNotifications: false,
+			shiftPressed: false,
 			servers: storeToRefs(useGlobalStore()).servers,
 			usersTyping: [] as string[],
 			socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
@@ -195,6 +197,25 @@ export default {
 			}
 
 			this.socket.emit(`typing`, this.server.id);
+		},
+		mouseEnter() {
+			document.body.addEventListener('keydown', this.keyPressed, false);
+			document.body.addEventListener('keyup', this.keyUnpressed, false);
+		},
+		mouseLeave() {
+			this.shiftPressed = false
+			document.body.removeEventListener('keydown', this.keyPressed, false)
+			document.body.removeEventListener('keyup', this.keyUnpressed, false)
+		},
+		keyPressed(ev: KeyboardEvent) {
+			if (ev.key === 'Shift') {
+				this.shiftPressed = true
+			}
+		},
+		keyUnpressed(ev: KeyboardEvent) {
+			if (ev.key === 'Shift') {
+				this.shiftPressed = false
+			}
 		},
 		calculateMessageClasses(message: IMessage, i: number) {
 			if (i === 0 || this.server.messages[i - 1]?.creator.id !== message.creator.id) {
@@ -291,9 +312,7 @@ export default {
 
 				if (this.server.messages.find((e) => e.id === message.id)) {
 					// message is already in the server, replace it with the updated message
-					console.log(message.id, message.body)
 					useGlobalStore().updateMessage(message.id, message)
-					console.log('raw', useGlobalStore().activeChannel.messages.find((e) => e.id === message.id)?.body)
 					return;
 				}
 

@@ -1,5 +1,3 @@
 <template>
-  <div>
-    <Popup />
-  </div>
+  <div>lorem ipsum</div>
 </template>

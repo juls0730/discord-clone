@@ -134,7 +134,8 @@
           <button
             v-for="channel in server.channels"
             :key="channel.id"
-            class="flex text-center bg-inherit hover:backdrop-brightness-[1.35] px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
+            :class="(activeChannel.id === channel.id) ? 'backdrop-brightness-[1.35]' : 'hover:backdrop-brightness-[1.35]'"
+            class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
             @click="openChannel(channel.id)"
           >
             <span class="h-fit">
@@ -330,10 +331,14 @@ import { useGlobalStore } from '~/stores/store';
 import { IChannel, IRole } from '~/types';
 
 export default {
+	setup() {
+		console.log('sidebar', useGlobalStore().activeServer.channels);
+	},
 	data() {
 		return {
 			server: storeToRefs(useGlobalStore()).activeServer,
 			serverType: storeToRefs(useGlobalStore()).activeServerType,
+			activeChannel: storeToRefs(useGlobalStore()).activeChannel,
 			user: storeToRefs(useGlobalStore()).user,
 			dms: storeToRefs(useGlobalStore()).dms,
 			createChannelModelOpen: false,

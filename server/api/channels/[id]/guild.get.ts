@@ -19,7 +19,9 @@ export default defineEventHandler(async (event) => {
 
 	const server = await prisma.server.findFirst({
 		where: {
-			id: event.context.params.id
+			channels: {
+				some: { id: event.context.params.id }
+			}
 		},
 		select: {
 			id: true,

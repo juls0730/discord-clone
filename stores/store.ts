@@ -40,6 +40,9 @@ export const useGlobalStore = defineStore('global', {
 		setActiveChannel(channel: IChannel) {
 			this.activeChannel = channel;
 		},
+		setActiveServerType(type: 'dms' | 'servers') {
+			this.activeServerType = type;
+		},
 		updateServer(channelId: string, server: IServer) {
 			const serverIndex = this.servers.findIndex(s => s.channels.some((c) => c.id === channelId));
 			this.servers[serverIndex] = server;
@@ -69,6 +72,12 @@ export const useGlobalStore = defineStore('global', {
 				return;
 			}
 			this.servers.push(server);
+		},
+		getServerByChannelId(channelId: string) {
+			let channel: IChannel | IServer | undefined = this.dms.find((e) => e.id === channelId);
+			if (channel) return channel;
+			channel = this.servers.find((e) => e.channels.some((c) => c.id === channelId));
+			return channel;
 		},
 		setDms(dms: Array<IChannel>) {
 			this.dms = dms;

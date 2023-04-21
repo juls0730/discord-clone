@@ -43,6 +43,12 @@ export default {
 			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel);
 		});
 
+		const friend = server.dmParticipants?.find((e) => e.id !== useGlobalStore().user.id)?.username;
+
+		useHeadSafe({
+			title: `@${friend} - Blop`
+		});
+
 		return {
 			server
 		};

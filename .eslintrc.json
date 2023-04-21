@@ -20,7 +20,8 @@
         "parseMessageBody": true,
         "storeToRefs": true,
         "useNuxtApp": true,
-        "NodeJS": true
+        "NodeJS": true,
+        "useHeadSafe": true
     },
     "parser": "vue-eslint-parser",
     "parserOptions": {

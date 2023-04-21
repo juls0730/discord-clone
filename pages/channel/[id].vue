@@ -1,18 +1,11 @@
 <!-- eslint-disable vue/no-multiple-template-root -->
 <template>
-  <MessagePane />
-  <div
-    class="fixed mr-3"
-    :style="`top: ${emojiPickerData.top}px; right: ${emojiPickerData.right}px`"
-  >
-    <Transition>
-      <Popup
-        :opened="emojiPickerData.opened"
-        :openedBy="emojiPickerData.type"
-        @pickedEmoji="pickedEmoji($event)"
-      />
-    </Transition>
-  </div>
+	<MessagePane />
+	<div class="fixed mr-3" :style="`top: ${emojiPickerData.top}px; right: ${emojiPickerData.right}px`">
+		<Transition>
+			<Popup :opened="emojiPickerData.opened" :openedBy="emojiPickerData.type" @pickedEmoji="pickedEmoji($event)" />
+		</Transition>
+	</div>
 </template>
 
 <script lang="ts">
@@ -27,14 +20,15 @@ definePageMeta({
 export default {
 	async setup() {
 		const route = useRoute();
+		if (useGlobalStore().servers.find((e) => { return e.channels.some((e) => e.id === route.params.id); } ) == undefined) navigateTo('/');
 		const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-		const server: IChannel = await $fetch(`/api/channels/${route.params.id}`, { headers });
+		const [server, realServer] = await Promise.all([
+			await $fetch(`/api/channels/${route.params.id}`, { headers }) as IChannel,
+			await $fetch(`/api/channels/${route.params.id}/guild`, { headers }) as IServer,
+		]);
 
-		// if (!useGlobalStore().servers.find((e) => e.id == server.serverId)?.participants) {
-		const realServer: IServer = await $fetch(`/api/guilds/${server.serverId}`, { headers });
 		if (!realServer) throw new Error('realServer not found, this means that the channel is serverless but not a dm????');
 		useGlobalStore().addServer(realServer);
-		// }
 
 		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?');
 		useGlobalStore().setActiveServer('servers', route.params.id);
@@ -43,6 +37,10 @@ export default {
 
 		server.messages?.forEach((e) => {
 			e.body = parseMessageBody(e.body, useGlobalStore().activeChannel);
+		});
+
+		useHeadSafe({
+			title: `#${server.name} | ${realServer.name} - Blop`
 		});
 
 		return {
@@ -67,7 +65,7 @@ export default {
 	},
 	async updated() {
 		const route = useRoute();
-		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumiably?');
+		if (typeof route.params.id !== 'string') throw new Error('route.params.id must be a string, but got an array presumably?');
 		if (useGlobalStore().activeChannel.id !== this.server.id) {
 			useGlobalStore().closeEmojiPicker();
 			useGlobalStore().setActiveServer('servers', route.params.id);

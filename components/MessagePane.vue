@@ -114,7 +114,7 @@
             <textarea
               id="messageBox"
               v-model="messageContent"
-							maxlength="5000"
+              maxlength="5000"
               type="text"
               class="bg-transparent focus:outline-none py-2 w-full resize-none leading-relaxed h-[44px]"
               cols="1"
@@ -274,7 +274,7 @@ export default {
 				}
 			} else {
 				if (i !== this.server.messages.length - 1 || this.server.messages[i + 1]?.creator.id === message.creator.id) {
-					return 'mt-0 mb-0 py-0.5';
+					return 'mt-0 mb-0 !py-0.5';
 				} else {
 					return 'mt-0 pt-0.5 pb-1';
 				}

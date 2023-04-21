@@ -7,3 +7,7 @@ node_modules
 
 # System files
 *.log
+
+# Secret files
+.env
+.env.local

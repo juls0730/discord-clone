@@ -1,44 +1,43 @@
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 
-export default {
-    ssr: true,
-    app: {
-        head: {
-            meta: [
-                { name: 'viewport', content: 'width=device-width, initial-scale=1' }
-            ],
-        }
-    },
+export default defineNuxtConfig({
+	ssr: true,
+	app: {
+		head: {
+			meta: [
+				{ name: 'viewport', content: 'width=device-width, initial-scale=1' }
+			],
+		}
+	},
 
-    css: [
-        '@/assets/css/main.css'
-    ],
+	css: [
+		'@/assets/css/main.css'
+	],
 
+	devtools: {
+		enabled: true,
+	},
 
-    postcss: {
-        plugins: {
-            tailwindcss: {},
-            autoprefixer: {},
-        },
-    },
+	modules: [
+		[
+			'@pinia/nuxt',
+			{
+				autoImports: [
+					// automatically imports `defineStore`
+					'defineStore', // import { defineStore } from 'pinia'
+					'storeToRefs',
+					// automatically imports `defineStore` as `definePiniaStore`
+					['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
+				],
+			},
+		],
+		'@nuxt/devtools',
+	],
 
-    modules: [
-        [
-            '@pinia/nuxt',
-            {
-                autoImports: [
-                    // automatically imports `defineStore`
-                    'defineStore', // import { defineStore } from 'pinia'
-                    'storeToRefs',
-                    // automatically imports `defineStore` as `definePiniaStore`
-                    ['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
-                ],
-            },
-        ],
-        '@vueuse/nuxt',
-    ],
-
-    typescript: {
-        strict: true
-    }
-}
+	postcss: {
+		plugins: {
+			tailwindcss: {},
+			autoprefixer: {},
+		},
+	},
+});

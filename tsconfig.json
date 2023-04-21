@@ -6,9 +6,9 @@
 			"ESNext.AsyncIterable",
 			"DOM"
 		],
+		"strict": true,
 		"sourceMap": true,
 		"skipLibCheck": true,
-		"strict": true,
 		"forceConsistentCasingInFileNames": true,
 		"noEmit": true,
 		"esModuleInterop": true,

@@ -1,20 +1,20 @@
-import { IChannel, IServer, SafeUser } from '../../../../types'
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { IChannel, IServer, SafeUser } from '~/types';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be logged in to view a channel.'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be logged in to view a channel.',
+		});
 	}
 
-	if (!event.context.params.id) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'A channelId is required'
-		}
+	if (!event.context.params?.id) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'A channelId is required',
+		});
 	}
 
 	const channel = await prisma.channel.findFirst({
@@ -58,7 +58,7 @@ export default defineEventHandler(async (event) => {
 													name: true,
 													participants: {
 														select: {
-															id: true
+															id: true,
 														}
 													}
 												}
@@ -69,7 +69,6 @@ export default defineEventHandler(async (event) => {
 										select: {
 											id: true,
 											emoji: true,
-											count: true,
 											users: {
 												select: {
 													id: true,
@@ -114,7 +113,6 @@ export default defineEventHandler(async (event) => {
 						select: {
 							id: true,
 							emoji: true,
-							count: true,
 							users: {
 								select: {
 									id: true,
@@ -137,10 +135,10 @@ export default defineEventHandler(async (event) => {
 	}) as IChannel | null;
 
 	if (!channel) {
-		event.node.res.statusCode = 404;
-		return {
-			message: `Channel with id "${event.context.params.id}" not found`
-		}
+		throw createError({
+			statusCode: 404,
+			statusMessage: `Channel with id "${event.context.params.id}" not found`,
+		});
 	}
 
 	if (channel.serverId && !channel.DM) {
@@ -156,15 +154,16 @@ export default defineEventHandler(async (event) => {
 
 		if (!server) return;
 
-		const userInServer: Array<SafeUser> | undefined = server?.participants.filter((e: SafeUser) => e.id === event.context.user.id)
+		const userInServer: Array<SafeUser> | undefined = server.participants.filter((e: SafeUser) => e.id === event.context.user.id);
 
 		if (!userInServer) {
-			event.node.res.statusCode = 401;
-			return {
-				message: `You must be in the server to access a channel in that server`
-			}
+			throw createError({
+				statusCode: 401,
+				statusMessage: 'You must be in the server to access a channel in that server',
+			});
 		}
+
 	}
 
-	return channel
-})
+	return channel;
+});

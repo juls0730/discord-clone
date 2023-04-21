@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client'
-import { IChannel, IServer, IUser } from '~/types'
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+import { IChannel, IServer } from '~/types';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: "Unauthenticated"
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'Unauthenticated',
+		});
 	}
 
 	const servers = await prisma.server.findMany({
@@ -24,89 +24,8 @@ export default defineEventHandler(async (event) => {
 			channels: {
 				select: {
 					id: true,
-					DM: true,
-					name: true,
-					server: {
-						select: {
-							id: true,
-							name: true,
-							participants: {
-								select: {
-									id: true,
-									username: true
-								}
-							},
-							channels: {
-								select: {
-									id: true,
-									DM: true,
-									name: true,
-									messages: {
-										select: {
-											id: true,
-											body: true,
-											creator: {
-												select: {
-													id: true,
-													username: true
-												}
-											},
-											invites: {
-												select: {
-													id: true,
-													server: {
-														select: {
-															id: true,
-															name: true,
-															participants: {
-																select: {
-																	id: true
-																}
-															}
-														}
-													}
-												}
-											},
-											reactions: {
-												select: {
-													id: true,
-													emoji: true,
-													count: true,
-													users: {
-														select: {
-															id: true,
-															username: true
-														}
-													}
-												}
-											}
-										}
-									}
-								}
-							},
-						}
-					},
-				},
-			},
-			participants: {
-				select: {
-					id: true,
-					username: true
 				}
 			},
-			roles: {
-				select: {
-					id: true,
-					name: true,
-					administrator: true,
-					owner: true,
-					users: {
-						select: {
-							id: true
-						}
-					}
-				}
-			}
 		}
 	}) as unknown as IServer[] | null;
 
@@ -122,7 +41,6 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			name: true,
-			messages: false,
 			DM: true,
 			dmParticipants: {
 				select: {
@@ -135,5 +53,5 @@ export default defineEventHandler(async (event) => {
 
 	return {
 		servers, dms
-	}
-})
+	};
+});

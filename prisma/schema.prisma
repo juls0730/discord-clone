@@ -100,8 +100,8 @@ model Session {
 
 model Reaction {
   id        String   @id @default(cuid())
-  emoji     Json
-  count     Int
+  emoji     String
+  // count     Int
   messageId String?
   Message   Message? @relation(fields: [messageId], references: [id])
   users     User[]   @relation("ReactionToUser")

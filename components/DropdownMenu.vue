@@ -1,17 +1,23 @@
 <template>
-	<Transition name="pop-in">
-		<div ref="dropdown" class="z-[2] absolute m-2 bg-[var(--primary-dark)] w-[calc(100%-1rem)] p-3 rounded text-left"
-		:class="(inverted) ? 'dropdown-inverse' : 'dropdown'"
-			v-if="opened">
-			<slot />
-		</div>
-	</Transition>
+  <Transition name="pop-in">
+    <div
+      v-if="opened"
+      ref="dropdown"
+      class="z-[2] absolute m-2 bg-[var(--primary-dark)] w-[calc(100%-1rem)] p-3 rounded text-left"
+      :class="(inverted) ? 'dropdown-inverse' : 'dropdown'"
+    >
+      <slot />
+    </div>
+  </Transition>
 </template>
 
 <script lang="ts">
 export default {
-	props: ['opened', 'inverted'],
-}
+	props: {
+		opened: Boolean,
+		inverted: Boolean,
+	},
+};
 </script>
 
 <style>

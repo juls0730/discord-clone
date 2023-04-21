@@ -1,23 +1,23 @@
-import { IChannel, IServer, SafeUser } from '~/types'
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { IChannel, IServer, SafeUser } from '~/types';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be logged in to view a channel.'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be logged in to view a channel.',
+		});
 	}
 
-	if (!event.context.params.id) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'A serverId is required'
-		}
+	if (!event.context.params?.id) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'A serverId is required',
+		});
 	}
 
-	const { channelName } = await readBody(event)
+	const { channelName } = await readBody(event);
 
 	const server = await prisma.server.findFirst({
 		where: {
@@ -31,26 +31,26 @@ export default defineEventHandler(async (event) => {
 	}) as IServer | null;
 
 	if (!server) {
-		event.node.res.statusCode = 404;
-		return {
-			message: `Server with id "${event.context.params.id}" not found`
-		}
+		throw createError({
+			statusCode: 404,
+			statusMessage: `Server with id "${event.context.params.id}" not found`,
+		});
 	}
 
-	const userInServer: Array<SafeUser> = server.participants.filter((e: SafeUser) => e.id === event.context.user.id)
+	const userInServer: Array<SafeUser> = server.participants.filter((e: SafeUser) => e.id === event.context.user.id);
 
 	if (!userInServer) {
-		event.node.res.statusCode = 401;
-		return {
-			message: `You must be in the server to access a channel in that server`
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be in the server to access a channel in that server',
+		});
 	}
 
 	if (server.channels?.find((e) => e.name === channelName)) {
-		event.node.res.statusCode = 409;
-		return {
-			message: `Channel with name "${channelName}" already exists in server with id "event.context.user.id"`
-		}
+		throw createError({
+			statusCode: 409,
+			statusMessage: `Channel with name "${channelName}" already exists in server with id "event.context.user.id"`,
+		});
 	}
 
 	const channel = await prisma.channel.create({
@@ -121,9 +121,9 @@ export default defineEventHandler(async (event) => {
 			},
 			serverId: true,
 		}
-	}) as IChannel
+	}) as IChannel;
 
-	global.io.emit(`addChannel-${server.id}`, channel)
+	global.io.emit(`addChannel-${server.id}`, channel);
 
-	return channel
-})
+	return channel;
+});

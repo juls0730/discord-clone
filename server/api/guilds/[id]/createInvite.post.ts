@@ -1,25 +1,25 @@
-import { IChannel, IInviteCode, IServer, SafeUser } from '~/types'
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { IInviteCode, IServer, SafeUser } from '~/types';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be logged in to view a channel.'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be logged in to view a channel.',
+		});
 	}
 
-	if (!event.context.params.id) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'A serverId is required'
-		}
+	if (!event.context.params?.id) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'A serverId is required',
+		});
 	}
 
-	let body = await readBody(event)
+	// const body = await readBody(event);
 
-	let expires = false;
+	// let expires = false;
 	// if (body.expiryDate) {
 	// 	expires = true;
 	// 	body.expiryDate = new Date(body.expiryDate).getUTCDate()
@@ -37,19 +37,19 @@ export default defineEventHandler(async (event) => {
 	}) as IServer | null;
 
 	if (!server) {
-		event.node.res.statusCode = 404;
-		return {
-			message: `Server with id "${event.context.params.id}" not found`
-		}
+		throw createError({
+			statusCode: 404,
+			statusMessage: `Server with id "${event.context.params.id}" not found`,
+		});
 	}
 
-	const userInServerAndPermited: Array<SafeUser> = server.participants.filter((e: SafeUser) => e.id === event.context.user.id && e.roles?.some((el) => el.administer === true || el.owner === false))
+	const userInServerAndPermited: Array<SafeUser> = server.participants.filter((e: SafeUser) => e.id === event.context.user.id && e.roles?.some((el) => el.administer === true || el.owner === false));
 
 	if (!userInServerAndPermited) {
-		event.node.res.statusCode = 401;
-		return {
-			message: `You must be in the server or an admin/owner of that server to make an invite code`
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be in the server or an admin/owner of that server to make an invite code',
+		});
 	}
 
 	const inviteCode = await prisma.inviteCode.create({
@@ -61,7 +61,7 @@ export default defineEventHandler(async (event) => {
 			},
 			maxUses: 0
 		}
-	}) as IInviteCode
+	}) as IInviteCode;
 
-	return inviteCode
-})
+	return inviteCode;
+});

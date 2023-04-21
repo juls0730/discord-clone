@@ -1,22 +1,22 @@
-import { IChannel, SafeUser } from '~/types'
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { IChannel, SafeUser } from '~/types';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be logged in to view a channel.'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be logged in to view a channel.',
+		});
 	}
 
-	const { partnerId } = await readBody(event)
+	const { partnerId } = await readBody(event);
 
 	if (!partnerId) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'A friend is required to create a DM.'
-		}
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'A friend is required to create a DM.',
+		});
 	}
 
 	const partner = await prisma.user.findFirst({
@@ -32,14 +32,14 @@ export default defineEventHandler(async (event) => {
 	}) as SafeUser | null;
 
 	if (!partner) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'No partner found'
-		}
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'No partner found',
+		});
 	}
 
 	if (!user) {
-		throw new Error('user not found?')
+		throw new Error('user not found?');
 	}
 
 	const preExistingServer = await prisma.channel.findFirst({
@@ -47,13 +47,13 @@ export default defineEventHandler(async (event) => {
 			name: `${user.id}-${partner.id}`,
 			DM: true
 		}
-	}) as IChannel
+	}) as IChannel;
 
 	if (preExistingServer) {
-		event.node.res.statusCode = 409;
-		return {
-			message: `DM already exists.`
-		}
+		throw createError({
+			statusCode: 409,
+			statusMessage: 'DM already exists.',
+		});
 	}
 
 	const server = await prisma.channel.create({
@@ -74,7 +74,7 @@ export default defineEventHandler(async (event) => {
 				}
 			}
 		}
-	}) as IChannel
+	}) as IChannel;
 
-	return server
-})
+	return server;
+});

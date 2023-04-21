@@ -1,13 +1,13 @@
-import { PrismaClient } from '@prisma/client'
-import { SafeUser } from '../../types'
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+import { SafeUser } from '~/types';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: "Unauthenticated"
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'Unauthenticated',
+		});
 	}
 
 	const user = await prisma.user.findFirst({
@@ -26,5 +26,5 @@ export default defineEventHandler(async (event) => {
 		}
 	}) as SafeUser | null;
 
-	return user
-})
+	return user;
+});

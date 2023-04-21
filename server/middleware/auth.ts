@@ -1,11 +1,11 @@
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
-	const cookies = parseCookies(event)
+	const cookies = parseCookies(event);
 
 	if (!cookies.sessionToken) {
-		event.context.user = { authenticated: false }
+		event.context.user = { authenticated: false };
 		return;
 	}
 
@@ -13,12 +13,12 @@ export default defineEventHandler(async (event) => {
 		where: {
 			token: cookies.sessionToken
 		}
-	})
+	});
 
 	if (!session) {
-		event.context.user = { authenticated: false }
+		event.context.user = { authenticated: false };
 		return;
 	}
-	
+
 	event.context.user = { authenticated: true, id: session.userId };
-})
+});

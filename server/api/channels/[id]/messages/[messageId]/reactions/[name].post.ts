@@ -1,23 +1,29 @@
-import { IChannel, IServer, SafeUser } from '~/types'
-import emojiRegex from 'emoji-regex'
-import { PrismaClient } from '@prisma/client'
-const prisma = new PrismaClient()
+import emojiRegex from 'emoji-regex';
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'You must be logged in to send a message.'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'You must be logged in to send a message.',
+		});
 	}
 
-	const emoji = decodeURIComponent(event.context.params.name)
+	if (!event.context.params?.name) {
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'Reaction must be defined.',
+		});
+	}
+
+	const emoji = decodeURIComponent(event.context.params.name);
 	const match = emoji.match(emojiRegex());
 	if (!match || match.length !== 1) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'reaction is not an emoji or more than one emoji.'
-		}
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'reaction is not an emoji or more than one emoji.',
+		});
 	}
 
 
@@ -30,27 +36,10 @@ export default defineEventHandler(async (event) => {
 				username: true
 			}
 		},
-		invites: {
-			select: {
-				id: true,
-				server: {
-					select: {
-						id: true,
-						name: true,
-						participants: {
-							select: {
-								id: true
-							}
-						}
-					}
-				}
-			}
-		},
 		reactions: {
 			select: {
 				id: true,
 				emoji: true,
-				count: true,
 				users: {
 					select: {
 						id: true,
@@ -59,31 +48,23 @@ export default defineEventHandler(async (event) => {
 				}
 			}
 		}
-	}
+	};
 
 	const message = await prisma.message.findFirst({
 		where: {
 			id: event.context.params.messageId
 		},
 		select: messageSelect
-	})
+	});
 
-	if (!message.id) {
-		event.node.res.statusCode = 404;
-		return {
-			message: `message with id "${event.context.params.messageId}" not found.`
-		}
+	if (!message || !message.id) {
+		throw createError({
+			statusCode: 404,
+			statusMessage: `message with id "${event.context.params.messageId}" not found.`,
+		});
 	}
 
-	const reactionInMessage = message.reactions.find((e) => e.emoji.name === emoji)
-
-	let count;
-
-	if (reactionInMessage?.count) {
-		count = reactionInMessage.count + 1;
-	} else {
-		count = 1;
-	}
+	const reactionInMessage = message.reactions.find((e) => e.emoji === emoji);
 
 	if (reactionInMessage && reactionInMessage.users.find((e) => e.id === event.context.user.id)) {
 		// remove reaction
@@ -92,23 +73,22 @@ export default defineEventHandler(async (event) => {
 				id: reactionInMessage.id
 			},
 			data: {
-				count: reactionInMessage.count - 1,
 				users: {
 					disconnect: [{ id: event.context.user.id }]
 				}
 			}
-		})
+		});
 
 		const updatedMessage = await prisma.message.findFirst({
 			where: {
 				id: event.context.params.messageId
 			},
 			select: messageSelect
-		})
+		});
 
 		global.io.emit(`message-${event.context.params.id}`, { message: updatedMessage });
 
-		return { message: updatedMessage }
+		return { message: updatedMessage };
 	}
 
 	let reaction;
@@ -119,22 +99,17 @@ export default defineEventHandler(async (event) => {
 				id: reactionInMessage.id
 			},
 			data: {
-				count,
 				users: {
 					connect: [{
 						id: event.context.user.id,
 					}]
 				},
 			}
-		})
+		});
 	} else {
 		reaction = await prisma.reaction.create({
 			data: {
-				emoji: {
-					name: emoji,
-					id: null
-				},
-				count: count,
+				emoji,
 				users: {
 					connect: [{
 						id: event.context.user.id,
@@ -146,7 +121,7 @@ export default defineEventHandler(async (event) => {
 					}
 				}
 			}
-		})
+		});
 	}
 
 	if (!reaction.messageId) return;
@@ -156,9 +131,9 @@ export default defineEventHandler(async (event) => {
 			id: reaction.messageId,
 		},
 		select: messageSelect
-	})
+	});
 
 	global.io.emit(`message-${event.context.params.id}`, { message: updatedMessage });
 
-	return { message: updatedMessage }
-})
+	return { message: updatedMessage };
+});

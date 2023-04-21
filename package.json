@@ -4,16 +4,18 @@
     "dev": "nuxi dev",
     "build": "nuxi build",
     "start": "nuxi start",
-    "prepare": "nuxi prepare"
+    "prepare": "nuxi prepare",
+    "lint": "eslint --ext .js,.vue,.ts ."
   },
   "dependencies": {
     "@pinia/nuxt": "^0.4.6",
     "@prisma/client": "^4.8.0",
     "bcryptjs": "^2.4.3",
-    "emoji-datasource-twitter": "^14.0.0",
+    "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
+    "ioredis": "^5.3.2",
     "mitt": "^3.0.0",
-    "nuxt": "^3.0.0",
+    "nuxt": "^3.4.1",
     "pinia": "^2.0.28",
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.5.4",
@@ -21,16 +23,18 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@nuxt/kit": "^3.0.0",
+    "@nuxt/devtools": "npm:@nuxt/devtools-edge@latest",
     "@types/bcryptjs": "^2.4.2",
     "@types/emoji-js": "^3.5.0",
-    "@types/twemoji": "^13.1.2",
+    "@types/node": "^18.15.11",
     "@types/uuid": "^9.0.0",
-    "@vueuse/core": "^9.10.0",
-    "@vueuse/nuxt": "^9.10.0",
-    "autoprefixer": "^10.4.13",
-    "postcss": "^8.4.20",
+    "@typescript-eslint/eslint-plugin": "^5.58.0",
+    "@typescript-eslint/parser": "^5.58.0",
+    "autoprefixer": "^10.4.14",
+    "eslint": "^8.38.0",
+    "eslint-plugin-vue": "^9.11.0",
+    "postcss": "^8.4.23",
     "prisma": "^4.8.0",
-    "tailwindcss": "^3.2.4"
+    "tailwindcss": "^3.3.1"
   }
 }

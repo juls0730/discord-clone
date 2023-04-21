@@ -1,17 +1,22 @@
-import bcryptjs from "bcryptjs";
-import { v4 as uuidv4 } from "uuid";
-import { PrismaClient } from '@prisma/client'
-import { IUser, SafeUser } from "../../types";
-const prisma = new PrismaClient()
+import bcryptjs from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
+import * as dotenv from 'dotenv';
+import crypto from 'node:crypto';
+import { PrismaClient } from '@prisma/client';
+import { IUser, SafeUser } from '~/types';
+const prisma = new PrismaClient();
+dotenv.config();
 
 export default defineEventHandler(async (event) => {
-	const body = await readBody(event)
+	if (!process.env.SESSION_SECRET_KEY) throw new Error('Session secret missing');
+
+	const body = await readBody(event);
 
 	if (!body.username || !body.password) {
-		event.node.res.statusCode = 400;
-		return {
-			message: 'A username, and a password are required to login'
-		}
+		throw createError({
+			statusCode: 400,
+			statusMessage: 'A username, and a password are required to login',
+		});
 	}
 
 	let user = await prisma.user.findFirst({
@@ -24,31 +29,33 @@ export default defineEventHandler(async (event) => {
 			passwordhash: true,
 			email: true,
 		},
-	}) as unknown as IUser
+	}) as unknown as IUser;
 
-	const isCorrect = await bcryptjs.compare(body.password, user.passwordhash)
+	const isCorrect = await bcryptjs.compare(body.password, user.passwordhash);
 
 	if (!isCorrect) {
-		event.node.res.statusCode = 401;
-		return {
-			message: 'Incorrect username or password'
-		}
+		throw createError({
+			statusCode: 401,
+			statusMessage: 'Incorrect username or password',
+		});
 	}
 
-	const token = uuidv4()
+	const token = crypto.createHmac('sha1', process.env.SESSION_SECRET_KEY)
+		.update(uuidv4())
+		.digest('hex');
 
 	await prisma.session.create({
 		data: {
 			token,
 			userId: user.id
 		}
-	})
+	});
 
-	user = user as SafeUser
+	user = user as SafeUser;
 
 	return {
 		token,
 		userId: user.id,
 		user
-	}
-})
+	};
+});

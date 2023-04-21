@@ -2,6 +2,7 @@ export interface IUser {
 	id: string;
 	email: string;
 	username: string;
+	online?: boolean;
 	passwordhash: string;
 	servers?: Array<IServer>;
 	channels?: Array<IChannel>;
@@ -66,23 +67,20 @@ export interface IRole {
 
 export interface IReaction {
 	id: string;
-	emoji: {
-		name: string;
-		id?: string;
-	};
-	count: number;
+	emoji: string;
 	previousCount?: number;
 	users: IUser[];
 	Message: IMessage;
 	messageId: string;
 }
 
-export interface IEmojiPickerData {
+export interface IPopupData {
 	opened: boolean;
 	top: number;
 	right: number;
-	openedBy: {
-		type: "message" | "messageInput";
+	type: 'emojiPicker' | 'userInfo';
+	openedBy?: {
+		type: 'message' | 'messageInput';
 		messageId?: string;
 	};
 }

@@ -235,7 +235,7 @@ export default {
 			if (!conversationDiv) throw new Error('wtf');
 			conversationDiv.scrollTo(0, conversationDiv.scrollHeight);
 		},
-		typing(event: KeyboardEvent) {
+		async typing(event: KeyboardEvent) {
 			const { $io } = useNuxtApp();
 
 			const specialKeys = [
@@ -252,7 +252,7 @@ export default {
 				return;
 			}
 
-			$io.emit('typing', this.channel.id);
+			(await $io).emit('typing', this.channel.id);
 		},
 		mouseEnter() {
 			document.body.addEventListener('keydown', this.keyPressed, false);
@@ -344,14 +344,14 @@ export default {
 			this.search.show = false;
 			this.$refs.messageBox.focus();
 		},
-		listenToWebsocket(conversationDiv: HTMLElement) {
-			const { $io } = useNuxtApp();
+		async listenToWebsocket(conversationDiv: HTMLElement) {
+			let { $io } = useNuxtApp();
 
-			$io.removeAllListeners();
+			(await $io).removeAllListeners();
 
-			$io.on(`message-${this.channel.id}`, (ev: { message: IMessage, deleted?: boolean }) => {
+			(await $io).on(`message-${this.channel.id}`, (ev: { message: IMessage, deleted?: boolean }) => {
 				let { message, deleted } = ev;
-				
+
 				if (deleted) {
 					useActiveStore().removeMessage(message.id);
 					return;
@@ -384,7 +384,7 @@ export default {
 			});
 
 			let timeout: NodeJS.Timeout;
-			$io.on(`typing-${this.channel.id}`, (ev: string) => {
+			(await $io).on(`typing-${this.channel.id}`, (ev: string) => {
 				if (ev === this.user?.username) return;
 				clearTimeout(timeout);
 				timeout = setTimeout(() => {

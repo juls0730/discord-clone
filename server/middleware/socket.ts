@@ -12,8 +12,6 @@ export default defineEventHandler(({ node }) => {
 	global.io.on('connection', async (socket: Socket) => {
 		const token = socket.handshake.auth.token;
 
-		console.log(token);
-
 		if (!token) {
 			socket.disconnect();
 			return;

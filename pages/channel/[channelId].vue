@@ -75,10 +75,10 @@ export default {
 			}
 		};
 	},
-	mounted() {
+	async mounted() {
 		const { $io } = useNuxtApp();
 
-		$io.on(`addChannel-${this.server.id}`, (ev) => {
+		(await $io).on(`addChannel-${this.server.id}`, (ev) => {
 			const newChannel = ev as IChannel;
 			useServerStore().addChannel(this.server.id, newChannel);
 		});

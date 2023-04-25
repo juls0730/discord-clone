@@ -52,19 +52,21 @@ export default defineEventHandler(async (event) => {
 			username: true,
 			servers: {
 				select: {
-					participants: {
+					id: true,
+					name: true,
+					channels: true,
+				}
+			},
+			channels: {
+				select: {
+					id: true,
+					DM: true,
+					dmParticipants: {
 						select: {
 							id: true,
-							username: true
+							username: true,
 						}
-					},
-					channels: {
-						select: {
-							id: true,
-							DM: true,
-							name: true,
-						}
-					},
+					}
 				}
 			}
 		},
@@ -83,7 +85,6 @@ export default defineEventHandler(async (event) => {
 
 	return {
 		token,
-		userId: user.id,
 		user
 	};
 });

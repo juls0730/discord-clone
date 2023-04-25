@@ -1,10 +1,9 @@
-import { IChannel } from '~/types';
+import { SafeUser } from '~/types';
 
-export default function parseBody(body: string, activeChannel: IChannel) {
-	if (!activeChannel.id) throw new Error('No active channel');
+export default function parseBody(body: string, participants: SafeUser[]) {
 	body = escape(body);
 	const rules = [
-		//bold, italics and paragragh rules
+		//bold, italics and paragraph rules
 		[/&#42;&#42;\s?([^\n]+)&#42;&#42;/g, '<b>$1</b>'],
 		[/&#42;\s?([^\n]+)&#42;/g, '<i>$1</i>'],
 		[/&#95;&#95;\s?([^\n]+)&#95;&#95;/g, '<u>$1</u>'],
@@ -28,8 +27,7 @@ export default function parseBody(body: string, activeChannel: IChannel) {
 	const mentions = body.match(mentionRegex);
 
 	if (mentions) {
-		const participants = (activeChannel.DM) ? activeChannel.dmParticipants : activeChannel.server.participants;
-		if (!participants) throw new Error(`participants in channel "${activeChannel.id}" not found"`);
+		if (!participants) throw new Error('participants in channel not found');
 		mentions.forEach((e: string) => {
 			const id = e.split('&#60;&#64;')[1]?.split('&#62;')[0];
 			if (!id) return;

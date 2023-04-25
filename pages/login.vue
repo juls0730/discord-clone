@@ -1,47 +1,52 @@
 <template>
-  <div class="w-screen h-screen bg-[hsl(216,calc(1*7.2%),10%)] relative">
-    <div
-      class="-translate-y-1/2 -translate-x-1/2 top-1/2 left-1/2 absolute bg-[hsl(216,calc(1*7.2%),16%)] p-4 rounded-md shadow-lg"
-    >
-      <h2 class="text-xl font-semibold text-center">
-        Login
-      </h2>
-      <form
-        class="flex flex-col gap-y-2 my-2"
-        @submit.prevent="signup()"
-      >
-        <input
-          v-model="username"
-          class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
-          name="username"
-          placeholder="username"
+  <div class="w-screen h-screen flex justify-center items-center bg-[var(--primary-bg)]">
+    <div class="bg-[var(--secondary-bg)] rounded-xl shadow-2xl flex flex-row overflow-hidden">
+      <img
+        src="/plants.jpg"
+        class="h-96 w-64 object-cover"
+      />
+      <div class="p-4 flex flex-col text-center">
+        <h1 class="font-semibold text-2xl">
+          Login
+        </h1>
+        <form
+          class="flex flex-col gap-y-3 my-2"
+          @submit.prevent="login"
         >
-        <input
-          v-model="password"
-          class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
-          name="password"
-          type="password"
-          placeholder="password"
-        >
-        <input
-          type="submit"
-          class="w-full bg-[#5865F2] py-2 px-4 rounded cursor-pointer"
-        >
-      </form>
-      <div class="text-center">
-        Or <nuxt-link
-          class="hover:underline text-blue-500"
-          to="/signup"
-        >
-          Signup
-        </nuxt-link>
+          <input
+            v-model="username"
+            class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+            name="username"
+            placeholder="username"
+          />
+          <input
+            v-model="password"
+            class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+            name="password"
+            type="password"
+            placeholder="password"
+          />
+          <input
+            type="submit"
+            value="Submit"
+            class="w-full bg-[#5865F2] py-2 px-4 rounded-md cursor-pointer"
+          />
+        </form>
+        <p>
+          or
+          <nuxt-link to="/signup">
+            Sign Up
+          </nuxt-link>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { useGlobalStore } from '~/stores/store';
+import { useDmStore } from '~/stores/dmStore';
+import { useServerStore } from '~/stores/serverStore';
+import { useUserStore } from '~/stores/userStore';
 import { SafeUser } from '~/types';
 
 definePageMeta({
@@ -56,34 +61,26 @@ export default {
 		};
 	},
 	methods: {
-		async signup() {
-			const globalStore = useGlobalStore();
+		async login() {
 			if (!this.username || !this.password) return;
-			const user = await $fetch('/api/login', {
+			const loginData = await $fetch('/api/login', {
 				method: 'post', body: {
 					username: this.username,
 					password: this.password
 				},
-			}) as { userId: string; token: string; user: SafeUser; };
+			}) as { token: string; user: SafeUser; };
 
 			const userId = useCookie('userId');
-			userId.value = user.userId;
+			userId.value = loginData.user.id;
 			const token = useCookie('sessionToken');
-			token.value = user.token;
+			token.value = loginData.token;
 
-			setTimeout(async () => {
-				const headers = { Cookie: `sessionToken=${token.value}` };
-				const { servers, dms } = await $fetch('/api/user/getServers', { headers });
+			useUserStore().setUser(loginData.user);
 
-				if (!servers || !dms) return;
+			useServerStore().setServers(loginData.user.servers);
+			useDmStore().setDms(loginData.user.channels);
 
-				globalStore.setServers(servers);
-				globalStore.setDms(dms);
-
-				globalStore.setUser(user.user);
-
-				navigateTo('/channel/@me');
-			});
+			return navigateTo('/');
 		}
 	}
 };

@@ -47,7 +47,23 @@ export default defineEventHandler(async (event) => {
 					}
 				}
 			}
-		}
+		},
+		invites: {
+			select: {
+				id: true,
+				server: {
+					select: {
+						id: true,
+						name: true,
+						participants: {
+							select: {
+								id: true
+							}
+						}
+					}
+				}
+			}
+		},
 	};
 
 	const message = await prisma.message.findFirst({

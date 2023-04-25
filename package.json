@@ -15,15 +15,15 @@
     "emoji-regex": "^10.2.1",
     "ioredis": "^5.3.2",
     "mitt": "^3.0.0",
-    "nuxt": "^3.4.1",
+    "nuxt": "^3.0.0",
     "pinia": "^2.0.28",
     "socket.io": "^4.5.4",
-    "socket.io-client": "^4.5.4",
+    "socket.io-client": "^4.6.1",
     "twemoji": "^14.0.2",
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@nuxt/devtools": "npm:@nuxt/devtools-edge@latest",
+    "@nuxt/devtools": "^0.4.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/emoji-js": "^3.5.0",
     "@types/node": "^18.15.11",

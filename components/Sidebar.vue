@@ -1,8 +1,7 @@
-<!-- eslint-disable vue/no-multiple-template-root -->
 <template>
-  <aside class="bg-[var(--background-color)] min-w-60 w-60 h-screen shadow-sm text-white select-none relative z-[2]">
+  <aside class="bg-[var(--secondary-bg)] min-w-60 w-60 h-screen shadow-sm text-white select-none relative z-[2]">
     <div
-      v-if="serverType === 'dms' || !server"
+      v-if="activeServer.type === 'dm' || !activeServer.data.server"
       class="h-full grid grid-rows-[48px_1fr] w-full"
     >
       <section>
@@ -14,18 +13,19 @@
       </section>
 
       <div
-        class="h-[calc(100%-12px)] mb-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg"
+        class="h-[calc(100%-12px)] grid grid-rows-[1fr_56px] bg-[var(--foreground-color)]"
       >
         <div class="h-fit">
           <nuxt-link
             v-for="dm in dms"
             :key="dm.id"
+            class="hover:no-underline"
             :to="'/channel/@me/' + dm.id"
           >
             <div
-              class="mx-2 my-4 bg-inherit hover:backdrop-brightness-[1.35] px-2 py-2 max-h-10 h-10 overflow-ellipsis rounded-md transition-all"
+              class="mx-2 my-4 bg-inherit hover:backdrop-brightness-[1.35] px-2 py-2 max-h-10 h-10 overflow-ellipsis transition-all"
             >
-              {{ dm.dmParticipants?.find((e) => e.id !== user.id)?.username }}
+              {{ dm.dmParticipants?.find((e) => e.id !== user?.id)?.username }}
             </div>
           </nuxt-link>
         </div>
@@ -37,11 +37,11 @@
     >
       <section>
         <h4
-          class="py-3 px-4 font-semibold grid gap-1 grid-cols-[1fr_28px] w-full items-center cursor-pointer p-1 bg-inherit transition-all rounded-lg"
+          class="py-3 px-4 font-semibold grid gap-1 grid-cols-[1fr_28px] w-full items-center cursor-pointer p-1 bg-inherit transition-all"
           :class="(!serverDropdownOpen) ? 'hover:backdrop-brightness-125' : 'backdrop-brightness-125'"
           @click="serverDropdownOpen = !serverDropdownOpen"
         >
-          <span>{{ server.name }}</span>
+          <span>{{ activeServer.data.server.name }}</span>
           <button>
             <span
               v-if="!serverDropdownOpen"
@@ -128,32 +128,35 @@
 
 
       <div
-        class="h-[calc(100%-12px)] mb-3 mx-1 grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg"
+        class="h-[calc(100%-12px)] grid grid-rows-[1fr_56px] bg-[var(--foreground-color)] rounded-lg"
       >
-        <div class="flex gap-y-1.5 px-1.5 mt-2 flex-col overflow-x-scroll">
-          <button
-            v-for="channel in server.channels"
+        <div class="flex gap-y-1.5 px-1.5 mt-2 flex-col overflow-y-auto overflow-x-hidden">
+          <nuxt-link
+            v-for="channel in activeServer.data.server.channels"
             :key="channel.id"
-            :class="(activeChannel.id === channel.id) ? 'backdrop-brightness-[1.35]' : 'hover:backdrop-brightness-[1.35]'"
-            class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
-            @click="openChannel(channel.id)"
+            :to="'/channel/' + channel.id"
           >
-            <span class="h-fit">
-              <svg
-                class="text-zinc-300/80 my-auto"
-                xmlns="http://www.w3.org/2000/svg"
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  fill="currentColor"
-                  d="m5.41 21l.71-4h-4l.35-2h4l1.06-6h-4l.35-2h4l.71-4h2l-.71 4h6l.71-4h2l-.71 4h4l-.35 2h-4l-1.06 6h4l-.35 2h-4l-.71 4h-2l.71-4h-6l-.71 4h-2M9.53 9l-1.06 6h6l1.06-6h-6Z"
-                />
-              </svg>
-            </span>
-            <span>{{ channel.name }}</span>
-          </button>
+            <button
+              :class="(activeServer.data.channel.id === channel.id) ? 'backdrop-brightness-[1.35]' : 'hover:backdrop-brightness-[1.35]'"
+              class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
+            >
+              <span class="h-fit">
+                <svg
+                  class="text-zinc-300/80 my-auto"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    fill="currentColor"
+                    d="m5.41 21l.71-4h-4l.35-2h4l1.06-6h-4l.35-2h4l.71-4h2l-.71 4h6l.71-4h2l-.71 4h4l-.35 2h-4l-1.06 6h4l-.35 2h-4l-.71 4h-2l.71-4h-6l-.71 4h-2M9.53 9l-1.06 6h6l1.06-6h-6Z"
+                  />
+                </svg>
+              </span>
+              <span class="text-ellipsis w-fit whitespace-nowrap overflow-hidden">{{ channel.name }}</span>
+            </button>
+          </nuxt-link>
           <button
             v-if="userIsOwner || userIsAdmin"
             class="flex text-center bg-inherit hover:backdrop-brightness-[1.45] px-2 py-1.5 w-full transition-all rounded drop-shadow-sm cursor-pointer items-center"
@@ -255,7 +258,7 @@
           <div class="h-full p-3">
             <div class="grid grid-cols-[32px_1fr_32px] gap-x-2 items-center">
               <span class="bg-[hsl(220,calc(1*6.8%),22.6%)] w-[32px] h-[32px] rounded-full" />
-              <span class="h-fit w-fit overflow-ellipsis">{{ user.username }}</span>
+              <span class="h-fit w-fit overflow-ellipsis">{{ user?.username }}</span>
               <button
                 class="text-zinc-300 hover:backdrop-brightness-90 p-1 rounded-md transition-all"
                 @click="userDropdownOpen = !userDropdownOpen"
@@ -290,69 +293,36 @@
       </div>
     </div>
   </aside>
-
-  <div
-    v-if="createChannelModelOpen"
-    class="absolute z-10 top-0 bottom-0 left-0 right-0"
-  >
-    <div
-      class="bg-black/70 w-screen h-screen"
-      @click="createChannelModelOpen = false"
-    />
-    <div
-      class="p-4 z-20 absolute bg-[var(--primary-500)] shadow-md rounded-md -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2 text-white"
-    >
-      <h2 class="font-semibold text-xl">
-        Create a channel:
-      </h2>
-      <div>
-        <form
-          class="w-3/5"
-          @submit.prevent="createChannel"
-        >
-          <input
-            v-model="channelName"
-            type="text"
-            class="py-2 px-3 rounded-md mb-2 bg-[var(--message-input-color)] shadow-md"
-            placeholder="Channel name"
-          >
-          <input
-            type="submit"
-            class="py-2 px-3 rounded-md bg-[var(--message-input-color)] shadow-md"
-          >
-        </form>
-      </div>
-    </div>
-  </div>
 </template>
 
 <script lang="ts">
-import { useGlobalStore } from '~/stores/store';
+import { useActiveStore } from '~/stores/activeStore';
+import { useDmStore } from '~/stores/dmStore';
+import { useServerStore } from '~/stores/serverStore';
+import { useUserStore } from '~/stores/userStore';
 import { IChannel, IRole } from '~/types';
 
 export default {
-	setup() {
-		console.log('sidebar', useGlobalStore().activeServer.channels);
-	},
 	data() {
 		return {
-			server: storeToRefs(useGlobalStore()).activeServer,
-			serverType: storeToRefs(useGlobalStore()).activeServerType,
-			activeChannel: storeToRefs(useGlobalStore()).activeChannel,
-			user: storeToRefs(useGlobalStore()).user,
-			dms: storeToRefs(useGlobalStore()).dms,
+			activeServer: {
+				type: storeToRefs(useActiveStore()).type,
+				data: storeToRefs(useActiveStore()).server,
+			},
+			user: storeToRefs(useUserStore()).user,
+			dms: storeToRefs(useDmStore()).dms,
+			channelName: '',
 			createChannelModelOpen: false,
 			serverDropdownOpen: false,
 			userDropdownOpen: false,
-			channelName: '',
 		};
 	},
 	computed: {
 		userIsOwner() {
-			return this.server && this.serverType === 'servers' && this.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user.id))?.owner;
+			return this.activeServer.data.server && this.activeServer.type === 'server' && this.activeServer.data.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user?.id))?.owner;
 		},
 		userIsAdmin() {
-			return this.server && this.serverType === 'servers' && this.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user.id))?.administer;
+			return this.activeServer.data.server && this.activeServer.type === 'server' && this.activeServer.data.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user?.id))?.administer;
 		}
 	},
 	methods: {
@@ -361,30 +331,20 @@ export default {
 		},
 		async createChannel() {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const channel = await $fetch(`/api/guilds/${this.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName }, headers }) as IChannel;
+			const channel = await $fetch(`/api/guilds/${this.activeServer.data.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName }, headers }) as IChannel;
 
 			if (!channel) return;
 
-			useGlobalStore().addChannel(this.server.id, channel);
+			useServerStore().addChannel(this.activeServer.data.server.id, channel);
 			this.createChannelModelOpen = false;
-		},
-		openChannel(id: string) {
-			const router = useRouter();
-
-			router.push({ params: { id } });
 		},
 		async createInvite() {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const inviteCode = await $fetch(`/api/guilds/${this.server.id}/createInvite`, { method: 'POST', headers });
+			const inviteCode = await $fetch(`/api/guilds/${this.activeServer.data.server.id}/createInvite`, { method: 'POST', headers });
 		},
 		async logout() {
-			await $fetch('/api/user/logout');
-			useCookie('sessionToken').value = null;
-			useCookie('userId').value = null;
-
-			useGlobalStore().logout();
-			navigateTo('/login');
+			useUserStore().logout();
 		}
-	},
+	}
 };
 </script>

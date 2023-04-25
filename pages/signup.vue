@@ -1,53 +1,59 @@
 <template>
-  <div class="w-screen h-screen bg-[hsl(216,calc(1*7.2%),10%)] relative">
-    <div
-      class="-translate-y-1/2 -translate-x-1/2 top-1/2 left-1/2 absolute bg-[hsl(216,calc(1*7.2%),16%)] p-4 rounded-md shadow-lg"
-    >
-      <h2 class="text-xl font-semibold text-center">
-        Sign up
-      </h2>
-      <form
-        class="flex flex-col gap-y-2 my-2"
-        @submit.prevent="signup()"
-      >
-        <input
-          v-model="username"
-          class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
-          name="username"
-          placeholder="username"
+  <div class="w-screen h-screen flex justify-center items-center bg-[var(--primary-bg)]">
+    <div class="bg-[var(--secondary-bg)] rounded-xl shadow-2xl flex flex-row overflow-hidden">
+      <img
+        src="/flowery-plants.jpg"
+        class="h-96 w-64 object-cover filter brightness-95"
+      />
+      <div class="p-4 flex flex-col text-center">
+        <h1 class="font-semibold text-2xl">
+          Sign Up
+        </h1>
+        <form
+          class="flex flex-col gap-y-3 my-2"
+          @submit.prevent="signup"
         >
-        <input
-          v-model="email"
-          class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
-          name="email"
-          placeholder="email"
-        >
-        <input
-          v-model="password"
-          class="border border-[hsl(218,calc(1*7.9%),23.7%)] px-4 py-2 rounded w-full bg-[hsl(218,calc(1*7.9%),27.3%)] placeholder:text-[var(--primary-placeholder)] focus:outline-none"
-          name="password"
-          type="password"
-          placeholder="password"
-        >
-        <input
-          type="submit"
-          class="w-full bg-[#5865F2] py-2 px-4 rounded cursor-pointer"
-        >
-      </form>
-      <div class="text-center">
-        Or <nuxt-link
-          class="hover:underline text-blue-500"
-          to="/login"
-        >
-          Login
-        </nuxt-link>
+          <input
+            v-model="username"
+            class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+            name="username"
+            placeholder="username"
+          />
+          <input
+            v-model="email"
+            class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+            type="email"
+            name="email"
+            placeholder="email"
+          />
+          <input
+            v-model="password"
+            class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+            name="password"
+            type="password"
+            placeholder="password"
+          />
+          <input
+            type="submit"
+            value="Submit"
+            class="w-full bg-[#5865F2] py-2 px-4 rounded cursor-pointer"
+          />
+        </form>
+        <p>
+          or
+          <nuxt-link to="/login">
+            Login
+          </nuxt-link>
+        </p>
       </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { useGlobalStore } from '~/stores/store';
+import { useDmStore } from '~/stores/dmStore';
+import { useServerStore } from '~/stores/serverStore';
+import { useUserStore } from '~/stores/userStore';
 import { SafeUser } from '~/types';
 
 definePageMeta({
@@ -64,34 +70,26 @@ export default {
 	},
 	methods: {
 		async signup() {
-			const globalStore = useGlobalStore();
 			if (!this.username || !this.password || !this.email) return;
-			const user = await $fetch('/api/signup', {
+			const signupData = await $fetch('/api/signup', {
 				method: 'post', body: {
 					username: this.username,
 					email: this.email,
 					password: this.password
 				},
-			}) as { userId: string; token: string; user: SafeUser; };
+			}) as { token: string; user: SafeUser; };
 
 			const userId = useCookie('userId');
-			userId.value = user.userId;
+			userId.value = signupData.user.id;
 			const token = useCookie('sessionToken');
-			token.value = user.token;
+			token.value = signupData.token;
 
-			setTimeout(async () => {
-				const headers = { Cookie: `sessionToken=${token.value}` };
-				const { servers, dms } = await $fetch('/api/user/getServers', { headers });
+			useUserStore().setUser(signupData.user);
 
-				if (!servers || !dms) return;
+			useServerStore().setServers(signupData.user.servers);
+			useDmStore().setDms(signupData.user.channels);
 
-				globalStore.setServers(servers);
-				globalStore.setDms(dms);
-
-				globalStore.setUser(user.user);
-
-				navigateTo('/channel/@me');
-			});
+			return navigateTo('/');
 		}
 	}
 };

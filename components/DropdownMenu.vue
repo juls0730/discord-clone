@@ -3,7 +3,7 @@
     <div
       v-if="opened"
       ref="dropdown"
-      class="z-[2] absolute m-2 bg-[var(--primary-dark)] w-[calc(100%-1rem)] p-3 rounded text-left"
+      class="z-[2] absolute m-2 bg-[var(--tertiary-bg)] w-[calc(100%-1rem)] p-3 rounded text-left"
       :class="(inverted) ? 'dropdown-inverse' : 'dropdown'"
     >
       <slot />

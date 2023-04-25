@@ -1,12 +1,12 @@
 <template>
   <div
-    class="h-full relative text-white bg-[var(--background-color)] grid grid-rows-[48px_1fr]"
+    class="h-full relative bg-[var(--primary-bg)] flex flex-col"
     @mouseenter="mouseEnter"
     @mouseleave="mouseLeave"
   >
-    <div class="w-full px-4 py-3 z-[1]">
+    <div class="px-4 py-3">
       <div
-        v-if="!server.DM"
+        v-if="!channel.DM"
         class="flex items-center"
       >
         <span class="mr-1">
@@ -23,7 +23,7 @@
             />
           </svg>
         </span>
-        <span class="text-zinc-100 font-semibold">{{ server.name }}</span>
+        <span class="font-semibold">{{ channel.name }}</span>
       </div>
       <div
         v-else
@@ -53,42 +53,44 @@
             </g>
           </svg>
         </span>
-        <span class="text-zinc-100 font-semibold">{{
-          server.dmParticipants?.find((e: SafeUser) => e.id !== user.id)?.username
+        <span class="font-semibold">{{
+          participants.find((e: SafeUser) => e.id !== user?.id)?.username
         }}</span>
       </div>
     </div>
 
     <section
-      class="bg-[var(--foreground-color)] mb-3 mx-1 h-[calc(100%-12px)] overflow-hidden rounded-lg relative grid grid-rows-[1fr_70px]"
+      class="h-full overflow-hidden rounded-lg relative flex flex-col"
     >
       <div
-        id="conversation-pane"
-        class="h-full overflow-y-scroll"
+        ref="conversationPane"
+        class="h-[calc(100%-70px)] overflow-y-scroll"
       >
         <div class="w-full pb-1 bg-inherit">
           <div>
-            <div v-if="server.messages.length === 0">
+            <div v-if="channel.messages.length === 0">
               <p>No messages yet</p>
             </div>
             <Message
-              v-for="(message, i) in server.messages"
+              v-for="(message, i) in channel.messages"
               v-else
               :key="message.id"
               :message="message"
               :shift-pressed="shiftPressed"
-              :show-username="i === 0 || server.messages[i - 1]?.creator.id !== message.creator.id"
+              :show-username="i === 0 || channel.messages[i - 1]?.creator.id !== message.creator.id"
               :classes="calculateMessageClasses(message, i)"
+              :channel-id="channel.id"
+              :participants="participants"
             />
           </div>
         </div>
         <div
-          v-if="showSearch"
-          class="absolute bottom-[calc(75px+0.5rem)] mx-4 w-[calc(100vw-88px-240px-32px)] py-3 px-4 bg-[var(--primary-500)] rounded-lg shadow-md z-5"
+          v-if="search.show"
+          class="absolute bottom-[calc(75px+0.5rem)] mx-4 w-[calc(100vw-88px-240px-32px)] py-3 px-4 bg-[var(--secondary-bg)] rounded-lg shadow-md z-5"
         >
           <div class="relative flex flex-col">
             <div
-              v-for="resultingUser in searchResults"
+              v-for="resultingUser in search.results"
               :key="resultingUser.id"
               class="mx-2 my-1 w-[calc(100vw-88px-240px-64px-16px)] px-4 py-3 hover:backdrop-brightness-125 select-none rounded-md transition-all"
               @click="completeMention(resultingUser)"
@@ -99,7 +101,7 @@
         </div>
       </div>
 
-      <div class="flex absolute flex-row bottom-0 w-full h-fit bg-inherit mb-1">
+      <div class="flex absolute flex-row bottom-0 w-full h-fit bg-inherit">
         <form
           class="relative px-4 w-full pt-1.5 h-fit pb-1"
           @keyup="checkForMentions"
@@ -109,10 +111,10 @@
         >
           <div
             id="textbox"
-            class="px-4 rounded-md w-full min-h-[44px] h-fit bg-[var(--message-input-color)] placeholder:text-[var(--primary-placeholder)] flex flex-row"
+            class="px-4 rounded-md w-full min-h-[44px] h-fit bg-[var(--secondary-bg)] placeholder:text-[var(--primary-placeholder)] flex flex-row"
           >
             <textarea
-              id="messageBox"
+              ref="messageBox"
               v-model="messageContent"
               maxlength="5000"
               type="text"
@@ -171,35 +173,39 @@
 </template>
 
 <script lang="ts">
-import { Server } from 'socket.io';
-import { useGlobalStore } from '~/stores/store';
-import { IMessage, SafeUser } from '~/types';
+import { PropType } from 'vue';
+import { useActiveStore } from '~/stores/activeStore';
+import { useUserStore } from '~/stores/userStore';
+import { IChannel, IMessage, SafeUser } from '~/types';
 
 export default {
+	props: {
+		channel: {
+			type: Object as PropType<IChannel>,
+			required: true
+		},
+		participants: {
+			type: Array as PropType<SafeUser[]>,
+			required: true
+		}
+	},
 	data() {
 		return {
-			user: storeToRefs(useGlobalStore()).user,
-			server: storeToRefs(useGlobalStore()).activeChannel,
+			user: storeToRefs(useUserStore()).user,
 			messageContent: '',
-			canSendNotifications: false,
 			shiftPressed: false,
-			servers: storeToRefs(useGlobalStore()).servers,
 			usersTyping: [] as string[],
-			socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
-			showSearch: false,
-			searchResults: [] as SafeUser[],
-			search: '',
+			search: {
+				content: '',
+				show: false,
+				results: [] as SafeUser[],
+			}
 		};
 	},
 	mounted() {
-		if (!this.user) throw new Error('User not found, but sessionToken cookie is set');
+		Notification.requestPermission();
 
-		Notification.requestPermission().then((result) => {
-			const permission = (result === 'granted') ? true : false;
-			this.canSendNotifications = permission;
-		});
-
-		const conversationDiv = document.getElementById('conversation-pane');
+		const conversationDiv = this.$refs.conversationPane as HTMLDivElement;
 		if (!conversationDiv) throw new Error('conversation div not found');
 		this.scrollToBottom();
 
@@ -210,28 +216,28 @@ export default {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			if (!this.messageContent) return;
 
-			let message: IMessage = await $fetch(`/api/channels/${this.server.id}/sendMessage`, { method: 'post', body: { body: this.messageContent }, headers });
+			let message: IMessage = await $fetch(`/api/channels/${this.channel.id}/sendMessage`, { method: 'post', body: { body: this.messageContent }, headers });
 
 			if (!message) return;
-			if (this.server.messages.includes(message)) return;
+			if (this.channel.messages.includes(message)) return;
 
-			message.body = parseMessageBody(message.body, useGlobalStore().activeChannel);
+			message.body = parseMessageBody(message.body, this.participants);
 
-			this.server.messages.push(message);
+			this.channel.messages.push(message);
 			this.messageContent = '';
-			const conversationDiv = document.getElementById('conversation-pane');
+			const conversationDiv = this.$refs.conversationPane as HTMLDivElement;
 			if (!conversationDiv) throw new Error('wtf');
 
-			setTimeout(() => {
-				conversationDiv.scrollTop = conversationDiv.scrollHeight;
-			});
+			this.scrollToBottom();
 		},
 		scrollToBottom() {
-			const conversationDiv = document.getElementById('conversation-pane');
+			const conversationDiv = this.$refs.conversationPane as HTMLDivElement;
 			if (!conversationDiv) throw new Error('wtf');
 			conversationDiv.scrollTo(0, conversationDiv.scrollHeight);
 		},
 		typing(event: KeyboardEvent) {
+			const { $io } = useNuxtApp();
+
 			const specialKeys = [
 				'Backspace',
 				'Enter',
@@ -246,7 +252,7 @@ export default {
 				return;
 			}
 
-			this.socket.emit('typing', this.server.id);
+			$io.emit('typing', this.channel.id);
 		},
 		mouseEnter() {
 			document.body.addEventListener('keydown', this.keyPressed, false);
@@ -268,12 +274,12 @@ export default {
 			}
 		},
 		calculateMessageClasses(message: IMessage, i: number) {
-			if (i === 0 || this.server.messages[i - 1]?.creator.id !== message.creator.id) {
-				if (i !== this.server.messages.length - 1 || this.server.messages[i + 1]?.creator.id === message.creator.id) {
+			if (i === 0 || this.channel.messages[i - 1]?.creator.id !== message.creator.id) {
+				if (i !== this.channel.messages.length - 1 || this.channel.messages[i + 1]?.creator.id === message.creator.id) {
 					return 'mb-0 pb-0.5';
 				}
 			} else {
-				if (i !== this.server.messages.length - 1 || this.server.messages[i + 1]?.creator.id === message.creator.id) {
+				if (i !== this.channel.messages.length - 1 || this.channel.messages[i + 1]?.creator.id === message.creator.id) {
 					return 'mt-0 mb-0 !py-0.5';
 				} else {
 					return 'mt-0 pt-0.5 pb-1';
@@ -283,31 +289,22 @@ export default {
 			return '';
 		},
 		checkForMentions() {
-			const input = document.getElementById('messageBox') as HTMLTextAreaElement;
+			const input = this.$refs.messageBox as HTMLTextAreaElement;
 			const startPosition = input.selectionStart;
 			const endPosition = input.selectionEnd;
 
 			if (startPosition === endPosition && this.inMention(startPosition)) {
-				let participants;
-				if (this.server.DM) {
-					participants = this.server.dmParticipants;
-				} else {
-					participants = this.server.server.participants;
-				}
-
-				if (!participants) throw new Error(`participants in channel "${this.server.id}" not found"`);
-
 				const search = this.messageContent.split(' ')[this.messageContent.substring(0, startPosition).split(' ').length - 1]?.slice(1);
 				if (!search) return;
 
-				this.search = search;
-				if (this.search.length === 0) {
-					this.showSearch = false;
+				this.search.content = search;
+				if (this.search.content.length === 0) {
+					this.search.show = false;
 					return;
 				}
 
 				const maxResults = Math.floor(document.body.clientHeight / 48 + 8) - 6;
-				let results = participants.filter((e: SafeUser) => e.username.includes(this.search));
+				let results = this.participants.filter((e: SafeUser) => e.username.includes(this.search.content));
 
 				results.sort((a: SafeUser, b: SafeUser) => {
 					const usernameA = a.username.toLowerCase();
@@ -327,13 +324,13 @@ export default {
 				}
 
 				if (results.length === 0) {
-					this.showSearch = false;
+					this.search.show = false;
 					return;
 				}
-				this.searchResults = results;
-				this.showSearch = true;
+				this.search.results = results;
+				this.search.show = true;
 			} else {
-				this.showSearch = false;
+				this.search.show = false;
 			}
 		},
 		inMention(cursorPos: number): boolean {
@@ -343,37 +340,39 @@ export default {
 			return this.inMention(cursorPos - 1);
 		},
 		completeMention(user: SafeUser) {
-			this.messageContent = this.messageContent.replace('@' + this.search, `<@${user.id}>`);
-			this.showSearch = false;
-			document.getElementById('messageBox')?.focus();
+			this.messageContent = this.messageContent.replace('@' + this.search.content, `<@${user.id}>`);
+			this.search.show = false;
+			this.$refs.messageBox.focus();
 		},
 		listenToWebsocket(conversationDiv: HTMLElement) {
-			this.socket.removeAllListeners();
+			const { $io } = useNuxtApp();
 
-			this.socket.on(`message-${this.server.id}`, (ev: { message: IMessage, deleted?: boolean }) => {
+			$io.removeAllListeners();
+
+			$io.on(`message-${this.channel.id}`, (ev: { message: IMessage, deleted?: boolean }) => {
 				let { message, deleted } = ev;
-
+				
 				if (deleted) {
-					useGlobalStore().removeMessage(message.id);
+					useActiveStore().removeMessage(message.id);
 					return;
 				}
 
-				message.body = parseMessageBody(message.body, useGlobalStore().activeChannel);
+				message.body = parseMessageBody(message.body, this.participants);
 
-				if (this.server.messages.find((e) => e.id === message.id)) {
+				if (this.channel.messages.find((e) => e.id === message.id)) {
 					// message is already in the server, replace it with the updated message
-					useGlobalStore().updateMessage(message.id, message);
+					useActiveStore().updateMessage(message);
 					return;
 				}
 
-				if (message.creator.id === this.user.id) return;
+				if (message.creator.id === this.user?.id) return;
 
 
 				if (!document.hasFocus()) {
-					new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: this.server.id.toString() });
+					new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: this.channel.id.toString() });
 				}
 
-				this.server.messages.push(message);
+				useActiveStore().addMessage(message);
 
 				const lastElementChild = conversationDiv.children[0]?.lastElementChild;
 				if (!lastElementChild) return;
@@ -385,8 +384,8 @@ export default {
 			});
 
 			let timeout: NodeJS.Timeout;
-			this.socket.on(`typing-${this.server.id}`, (ev: string) => {
-				if (ev === this.user.username) return;
+			$io.on(`typing-${this.channel.id}`, (ev: string) => {
+				if (ev === this.user?.username) return;
 				clearTimeout(timeout);
 				timeout = setTimeout(() => {
 					this.usersTyping = this.usersTyping.filter(username => username !== ev);
@@ -395,17 +394,7 @@ export default {
 				this.usersTyping.push(ev);
 			});
 		},
-		// resizeTextarea() {
-		// 	const textArea = document.getElementById('messageBox')
-		// 	const textBox = document.getElementById('textBox')
-		// 	const taLineHeight = 26; // This should match the line-height in the CSS
-		// 	const taHeight = textArea.scrollHeight; // Get the scroll height of the textarea
-		// 	if (!taHeight) taHeight = 44;
-		// 	textArea.style.height = taHeight + 'px'; // This line is optional, I included it so you can more easily count the lines in an expanded textarea
-		// 	const numberOfLines = Math.floor(taHeight / taLineHeight);
-		// 	console.log("there are " + numberOfLines + " lines in the text area");
-		// 	console.log('a')
-		// }
 	},
 };
+
 </script>

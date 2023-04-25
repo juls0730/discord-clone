@@ -1,5 +1,5 @@
 <template>
-  <div class="w-6/12 bg-[var(--primary-500)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
+  <div class="w-6/12 bg-[var(--secondary-bg)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
     <p class="text-sm font-semibold text-zinc-100">
       You've been invited to join a
       server
@@ -8,13 +8,13 @@
     <div class="flex flex-row">
       <div class="flex items-center mr-4">
         <span
-          class="before:bg-[var(--invite-members)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"
+          class="before:bg-[var(--primary-accent)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"
         />
         <span>{{ invite.server.participants.length }} Members</span>
       </div>
       <div class="flex items-center">
         <span
-          class="before:bg-[var(--invite-members)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"
+          class="before:bg-[var(--primary-accent)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"
         />
         <span>{{ invite.server.participants.filter((e: IUser) => e.online === true).length }} Online</span>
       </div>
@@ -37,25 +37,27 @@
 </template>
 
 <script lang="ts">
-import { useGlobalStore } from '~/stores/store';
+import { PropType } from 'vue';
+import { useServerStore } from '~/stores/serverStore';
+import { useUserStore } from '~/stores/userStore';
 import { IInviteCode, IUser } from '~/types';
 
 export default {
 	props: {
 		invite: {
-			type: Object,
+			type: Object as PropType<IInviteCode>,
 			required: true
 		}
 	},
 	data() {
 		return {
-			user: storeToRefs(useGlobalStore()).user,
-			servers: storeToRefs(useGlobalStore()).servers,
+			user: storeToRefs(useUserStore()).user,
+			servers: storeToRefs(useServerStore()).servers,
 		};
 	},
 	computed: {
 		userInServer(): boolean {
-			return !!this.invite.server.participants.find((e: IUser) => e.id === this.user.id);
+			return !!this.invite.server.participants.find((e: IUser) => e.id === this.user?.id);
 		}
 	},
 	methods: {

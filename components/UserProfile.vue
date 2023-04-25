@@ -1,7 +1,7 @@
 <template>
   <div />
 </template>
-
+<!-- 
 <script>
 import { IUser } from '~/types';
 
@@ -13,4 +13,4 @@ export default {
 		}
 	}
 };
-</script>
+</script> -->

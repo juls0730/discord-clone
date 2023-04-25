@@ -9,7 +9,7 @@
     >
       <div
         :id="`actions-${message.id}`"
-        class="relative bg-[var(--primary-400)] rounded-md border border-[rgb(32,34,37)] text-[var(--primary-text)] flex overflow-hidden"
+        class="relative bg-[var(--tertiary-bg)] rounded-md border border-[rgb(32,34,37)] text-[var(--primary-text)] flex overflow-hidden"
       >
         <button
           class="p-1 hover:backdrop-brightness-125 transition-all flex w-fit h-fit"
@@ -72,7 +72,7 @@
           class="flex"
         >
           <button
-            class="p-1 hover:backdrop-brightness-125 transition-all flex text-[var(--primary-400)] w-[28px] h-[28px] items-center justify-center"
+            class="p-1 hover:backdrop-brightness-125 transition-all flex w-[28px] h-[28px] items-center justify-center"
             @click="copy(message.id)"
           >
             <svg
@@ -83,14 +83,14 @@
               viewBox="0 0 24 24"
             >
               <path
-                fill="currentColor"
+                fill="var(--tertiary-bg)"
                 d="M10 7v2H9v6h1v2H6v-2h1V9H6V7h4m6 0a2 2 0 0 1 2 2v6c0 1.11-.89 2-2 2h-4V7m4 2h-2v6h2V9Z"
               />
             </svg>
           </button>
           <button
-            v-if="message.creator.id === user.id"
-            class="p-1 hover:backdrop-brightness-125 transition-all flex text-[var(--primary-danger)] w-[28px] h-[28px] items-center justify-center"
+            v-if="message.creator.id === user?.id"
+            class="p-1 hover:backdrop-brightness-125 transition-all flex w-[28px] h-[28px] items-center justify-center"
             @click="deleteMessage()"
           >
             <svg
@@ -101,7 +101,7 @@
             >
               <path
                 fill="none"
-                stroke="currentColor"
+                stroke="var(--primary-danger)"
                 stroke-linecap="round"
                 stroke-linejoin="round"
                 stroke-width="2"
@@ -113,7 +113,7 @@
       </div>
     </div>
     <div
-      class="transition-[backdrop-filter] hover:backdrop-brightness-90 ease-[cubic-bezier(.37,.64,.59,.33)] duration-150 my-4 px-7 py-2 message-wrapper items-center z-[1]"
+      class="transition-[backdrop-filter] hover:backdrop-brightness-125 ease-[cubic-bezier(.37,.64,.59,.33)] duration-150 my-4 px-7 py-2 message-wrapper items-center z-[1]"
       :class="classes"
     >
       <div class="message-content">
@@ -137,14 +137,14 @@
         </div>
         <div class="flex gap-2 flex-wrap">
           <button
-            v-for="reaction in message.reactions"
+            v-for="reaction in reactions"
             :key="reaction.emoji"
-            class="py-0.5 px-1.5 bg-[var(--primary-500)] border items-center flex rounded-lg border-[var(--primary-500)] hover:border-[var(--reaction-border)] hover:bg-[var(--reaction-hover)] transition-colors shadow-sm max-h-[30px]"
-            :class="(reaction.users.find((e) => e.id === user.id)) ? '!border-[rgb(88,101,242)] hover:!border-[rgb(88,101,242)]' : ''"
+            class="py-0.5 px-1.5 bg-[var(--secondary-bg)] border items-center flex rounded-lg border-[var(--tertiary-bg)] hover:border-[var(--reaction-hover-border)] hover:bg-[var(--reaction-hover)] transition-colors shadow-sm max-h-[30px]"
+            :class="(reaction.users.find((e) => e.id === user?.id)) ? '!border-[var(--reaction-active-border)] hover:!border-[var(--reaction-active-border)]' : ''"
             @click="toggleReaction(reaction.emoji)"
           >
             <div class="flex items-center mr-0.5 w-6 drop-shadow">
-              <span :style="emojiStyles(reaction.emoji, 16)" />
+              <span :style="emojiStyles(reaction.emoji, 17)" />
             </div>
             <div class="relative overflow-hidden ml-1.5">
               <div
@@ -163,9 +163,11 @@
 
 <script lang="ts">
 import { PropType } from 'vue';
-import { IPopupData, IMessage } from '~/types';
-import { useGlobalStore } from '~/stores/store';
+import { IPopupData, IMessage, SafeUser, IReaction } from '~/types';
 import emojiJson from '~/assets/json/emoji.json';
+import { useActiveStore } from '~/stores/activeStore';
+import { useUserStore } from '~/stores/userStore';
+import { useEmojiPickerStore } from '~/stores/emojiPickerStore';
 
 export default {
 	props: {
@@ -184,19 +186,32 @@ export default {
 		classes: {
 			type: String,
 			required: true
+		},
+		channelId: {
+			type: String,
+			required: true
+		},
+		participants: {
+			type: Array as PropType<SafeUser[]>,
+			required: true
 		}
 	},
 	data() {
 		return {
-			user: storeToRefs(useGlobalStore()).user,
+			user: storeToRefs(useUserStore()).user,
 			emojiPickerOpen: false,
 			overflowShown: false
 		};
 	},
+	computed: {
+		reactions(): IReaction[] {
+			return this.message.reactions?.filter((e) => e.users.length > 0) || [];
+		}
+	},
 	mounted() {
 		const { $listen } = useNuxtApp();
 		$listen('pickedEmoji', (emoji) => {
-			if (useGlobalStore().emojiPickerData.openedBy?.messageId !== this.message.id) return;
+			if (useEmojiPickerStore().emojiPickerData.openedBy?.messageId !== this.message.id) return;
 			const replacementEmoji = emojiJson.find((e) => e.short_names[0] === emoji);
 			if (!replacementEmoji?.emoji) return;
 			if (this.message.reactions?.find((e) => e.emoji === replacementEmoji.emoji)) return;
@@ -205,12 +220,11 @@ export default {
 	},
 	methods: {
 		async toggleReaction(emoji: string) {
-			const route = useRoute();
-			let { message } = await $fetch(`/api/channels/${route.params.id}/messages/${this.message.id}/reactions/${emoji}`, { method: 'POST' }) as { message: IMessage };
+			let { message } = await $fetch(`/api/channels/${this.channelId}/messages/${this.message.id}/reactions/${emoji}`, { method: 'POST' }) as { message: IMessage };
 
-			message.body = parseMessageBody(message.body, useGlobalStore().activeChannel);
+			message.body = parseMessageBody(message.body, this.participants);
 
-			useGlobalStore().updateMessage(this.message.id, message);
+			useActiveStore().updateMessage(message);
 		},
 		openEmojiPicker() {
 			const actionButtons = document.getElementById(`actions-${this.message.id}`);
@@ -218,7 +232,6 @@ export default {
 
 			const elementRect = actionButtons.getBoundingClientRect();
 			let top = elementRect.top + window.pageYOffset;
-
 			if (top + 522 > window.innerHeight) top = window.innerHeight - 522;
 
 			const payload = {
@@ -229,7 +242,8 @@ export default {
 					messageId: this.message.id
 				}
 			} as IPopupData;
-			useGlobalStore().toggleEmojiPicker(payload);
+
+			useEmojiPickerStore().toggleEmojiPicker(payload);
 		},
 		emojiStyles(emoji: string, width: number) {
 			const emojis = emojiJson;
@@ -249,8 +263,7 @@ export default {
 			};
 		},
 		async deleteMessage() {
-			const route = useRoute();
-			await $fetch(`/api/channels/${route.params.id}/messages/${this.message.id}/delete`, { method: 'DELETE' });
+			await $fetch(`/api/channels/${this.channelId}/messages/${this.message.id}/delete`, { method: 'DELETE' });
 		},
 		copy(text: string) {
 			navigator.clipboard.writeText(text);
@@ -266,10 +279,10 @@ export default {
 }
 
 pre.codeblock {
-	background-color: var(--primary-500);
-	border: 1px solid var(--primary-700);
+	background-color: var(--secondary-bg);
+	border: 1px solid var(--tertiary-bg);
 	border-radius: 0.375rem;
-	white-space: prewrap;
+	white-space: pre-wrap;
 	margin-top: 4px;
 	margin-bottom: 0;
 	display: flex;
@@ -285,7 +298,7 @@ pre.codeblock code {
 }
 
 code.inline-code {
-	background-color: var(--primary-500);
+	background-color: var(--secondary-bg);
 	padding: 0.2rem;
 	font-size: 85%;
 	border-radius: 4px;

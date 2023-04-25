@@ -88,6 +88,7 @@ export default defineEventHandler(async (event) => {
 				select: {
 					id: true,
 					body: true,
+					createdAt: true,
 					creator: {
 						select: {
 							id: true,

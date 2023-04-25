@@ -1,7 +1,8 @@
 // https://v3.nuxtjs.org/api/configuration/nuxt.config
 
 export default defineNuxtConfig({
-	ssr: false,
+	ssr: true,
+
 	app: {
 		head: {
 			meta: [
@@ -15,7 +16,7 @@ export default defineNuxtConfig({
 	],
 
 	devtools: {
-		enabled: true,
+		enabled: false
 	},
 
 	modules: [
@@ -23,15 +24,14 @@ export default defineNuxtConfig({
 			'@pinia/nuxt',
 			{
 				autoImports: [
-					// automatically imports `defineStore`
-					'defineStore', // import { defineStore } from 'pinia'
+					'acceptHMRUpdate',
+					'defineStore',
 					'storeToRefs',
-					// automatically imports `defineStore` as `definePiniaStore`
-					['defineStore', 'definePiniaStore'], // import { defineStore as definePiniaStore } from 'pinia'
+					['defineStore', 'definePiniaStore'],
 				],
 			},
 		],
-		'@nuxt/devtools',
+		'@nuxt/devtools'
 	],
 
 	postcss: {

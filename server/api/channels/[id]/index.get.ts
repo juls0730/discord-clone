@@ -39,46 +39,6 @@ export default defineEventHandler(async (event) => {
 							id: true,
 							DM: true,
 							name: true,
-							messages: {
-								select: {
-									id: true,
-									body: true,
-									creator: {
-										select: {
-											id: true,
-											username: true
-										}
-									},
-									invites: {
-										select: {
-											id: true,
-											server: {
-												select: {
-													id: true,
-													name: true,
-													participants: {
-														select: {
-															id: true,
-														}
-													}
-												}
-											}
-										}
-									},
-									reactions: {
-										select: {
-											id: true,
-											emoji: true,
-											users: {
-												select: {
-													id: true,
-													username: true
-												}
-											}
-										}
-									}
-								}
-							}
 						}
 					},
 				}
@@ -87,6 +47,7 @@ export default defineEventHandler(async (event) => {
 				select: {
 					id: true,
 					body: true,
+					createdAt: true,
 					creator: {
 						select: {
 							id: true,

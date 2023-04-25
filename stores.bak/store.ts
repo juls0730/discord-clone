@@ -82,7 +82,7 @@ export const useGlobalStore = defineStore('global', {
 		setDms(dms: Array<IChannel>) {
 			this.dms = dms;
 		},
-		setSocket(socket: Socket) {
+		setSocket(socket: Socket | null) {
 			this.socket = socket;
 		},
 		setUser(user: SafeUser) {

@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import crypto from 'node:crypto';
 import { PrismaClient } from '@prisma/client';
-import { IUser, SafeUser } from '~/types';
+import { IUser } from '~/types';
 const prisma = new PrismaClient();
 dotenv.config();
 
@@ -27,7 +27,25 @@ export default defineEventHandler(async (event) => {
 			id: true,
 			username: true,
 			passwordhash: true,
-			email: true,
+			servers: {
+				select: {
+					id: true,
+					name: true,
+					channels: true,
+				}
+			},
+			channels: {
+				select: {
+					id: true,
+					DM: true,
+					dmParticipants: {
+						select: {
+							id: true,
+							username: true,
+						}
+					}
+				}
+			}
 		},
 	}) as unknown as IUser;
 
@@ -51,11 +69,10 @@ export default defineEventHandler(async (event) => {
 		}
 	});
 
-	user = user as SafeUser;
+	user.passwordhash = undefined;
 
 	return {
 		token,
-		userId: user.id,
 		user
 	};
 });

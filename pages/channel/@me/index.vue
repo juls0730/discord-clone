@@ -6,7 +6,8 @@
 </template>
 
 <script lang="ts">
-import { useGlobalStore } from '~/stores/store';
+import { useActiveStore } from '~/stores/activeStore';
+import { useDmStore } from '~/stores/dmStore';
 import { IChannel } from '~/types';
 
 definePageMeta({  
@@ -20,14 +21,14 @@ export default {
 		};
 	},
 	mounted() {
-		useGlobalStore().setActiveServer('dms', '@me');
+		useActiveStore().type = 'dm';
 	},
 	methods: {
 		async startDM() {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			const server: IChannel = await $fetch('/api/channels/createDM', { method: 'post', body: { partnerId: this.userId }, headers }); 
 
-			useGlobalStore().addDM(server);
+			useDmStore().addDM(server);
 			useRouter().push({ path: '/channel/@me/' + server.id });
 		}
 	}

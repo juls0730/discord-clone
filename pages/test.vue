@@ -1,3 +1,3 @@
 <template>
-  <div>lorem ipsum</div>
+  <p>hey</p>
 </template>

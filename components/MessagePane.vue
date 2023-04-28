@@ -1,5 +1,6 @@
 <template>
   <div
+    id="messagePane"
     class="h-full relative bg-[var(--primary-bg)] flex flex-col"
     @mouseenter="mouseEnter"
     @mouseleave="mouseLeave"
@@ -77,8 +78,8 @@
               :key="message.id"
               :message="message"
               :shift-pressed="shiftPressed"
-              :show-username="i === 0 || channel.messages[i - 1]?.creator.id !== message.creator.id"
-              :classes="calculateMessageClasses(message, i)"
+              :show-username="calculateMessageDesign(message, i).showUsername"
+              :classes="calculateMessageDesign(message, i).classes"
               :channel-id="channel.id"
               :participants="participants"
             />
@@ -214,21 +215,21 @@ export default {
 	methods: {
 		async sendMessage() {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			if (!this.messageContent) return;
+			if (!this.messageContent || !this.messageContent.trim()) return;
 
 			let message: IMessage = await $fetch(`/api/channels/${this.channel.id}/sendMessage`, { method: 'post', body: { body: this.messageContent }, headers });
 
 			if (!message) return;
 			if (this.channel.messages.includes(message)) return;
 
-			message.body = parseMessageBody(message.body, this.participants);
-
-			this.channel.messages.push(message);
+			useActiveStore().addMessage(message);
 			this.messageContent = '';
 			const conversationDiv = this.$refs.conversationPane as HTMLDivElement;
 			if (!conversationDiv) throw new Error('wtf');
 
-			this.scrollToBottom();
+			setTimeout(() => {
+				this.scrollToBottom();
+			});
 		},
 		scrollToBottom() {
 			const conversationDiv = this.$refs.conversationPane as HTMLDivElement;
@@ -273,20 +274,20 @@ export default {
 				this.shiftPressed = false;
 			}
 		},
-		calculateMessageClasses(message: IMessage, i: number) {
-			if (i === 0 || this.channel.messages[i - 1]?.creator.id !== message.creator.id) {
-				if (i !== this.channel.messages.length - 1 || this.channel.messages[i + 1]?.creator.id === message.creator.id) {
-					return 'mb-0 pb-0.5';
+		calculateMessageDesign(message: IMessage, i: number) {
+			if (i === 0 || (this.channel.messages[i - 1]?.creator.id !== message.creator.id || new Date(this.channel.messages[i-1]?.createdAt).getTime()+((30*60)*1000)<new Date(this.channel.messages[i]?.createdAt).getTime())) {
+				if (i !== this.channel.messages.length - 1) {
+					return { classes: 'mb-0 pb-0.5', showUsername: true };
 				}
 			} else {
 				if (i !== this.channel.messages.length - 1 || this.channel.messages[i + 1]?.creator.id === message.creator.id) {
-					return 'mt-0 mb-0 !py-0.5';
+					return { classes: 'mt-0 mb-0 !py-0.5', showUsername: false };
 				} else {
-					return 'mt-0 pt-0.5 pb-1';
+					return { classes: 'mt-0 pt-0.5 pb-1', showUsername: false };
 				}
 			}
 
-			return '';
+			return {classes: '', showUsername: true };
 		},
 		checkForMentions() {
 			const input = this.$refs.messageBox as HTMLTextAreaElement;
@@ -342,7 +343,7 @@ export default {
 		completeMention(user: SafeUser) {
 			this.messageContent = this.messageContent.replace('@' + this.search.content, `<@${user.id}>`);
 			this.search.show = false;
-			this.$refs.messageBox.focus();
+			(this.$refs.messageBox as HTMLInputElement).focus();
 		},
 		async listenToWebsocket(conversationDiv: HTMLElement) {
 			let { $io } = useNuxtApp();
@@ -357,16 +358,11 @@ export default {
 					return;
 				}
 
-				message.body = parseMessageBody(message.body, this.participants);
-
 				if (this.channel.messages.find((e) => e.id === message.id)) {
 					// message is already in the server, replace it with the updated message
 					useActiveStore().updateMessage(message);
 					return;
 				}
-
-				if (message.creator.id === this.user?.id) return;
-
 
 				if (!document.hasFocus()) {
 					new Notification(`Message from @${message.creator.username}`, { body: message.body, tag: this.channel.id.toString() });

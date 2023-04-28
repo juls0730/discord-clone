@@ -118,15 +118,40 @@
     >
       <div class="message-content">
         <div class="message-sender-text">
-          <p
-            v-if="showUsername"
-            class="mb-1 font-semibold w-fit"
+          <p 
+            v-if="showUsername" 
+            class="flex flex-row"
           >
-            {{ message.creator.username }}
+            <span
+              ref="username"
+              class="mb-1 font-semibold w-fit cursor-pointer hover:underline"
+              @click="openUserProfile()"
+            >
+              {{ message.creator.username }}
+            </span>
+            <span
+              v-if="userIsOwner"
+              class="ml-0.5"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+              ><path
+                class="text-yellow-300"
+                fill="none"
+                stroke="currentColor"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="m12 6l4 6l5-4l-2 10H5L3 8l5 4z"
+              /></svg>
+            </span>
           </p>
-          <p
-            class="break-words max-w-full"
-            v-html="message.body"
+          <div
+            class="break-words max-w-full whitespace-pre-wrap"
+            v-html="parseMessageBody(message.body, participants)"
           />
         </div>
         <div
@@ -206,6 +231,10 @@ export default {
 	computed: {
 		reactions(): IReaction[] {
 			return this.message.reactions?.filter((e) => e.users.length > 0) || [];
+		},
+		userIsOwner(): boolean {
+			if (useActiveStore().type !== 'server') return false;
+			return !!useActiveStore().server.server.participants.find((e) => e.id === this.message.creator.id)?.roles?.find((e) => e.owner) || false;
 		}
 	},
 	mounted() {
@@ -214,7 +243,8 @@ export default {
 			if (useEmojiPickerStore().emojiPickerData.openedBy?.messageId !== this.message.id) return;
 			const replacementEmoji = emojiJson.find((e) => e.short_names[0] === emoji);
 			if (!replacementEmoji?.emoji) return;
-			if (this.message.reactions?.find((e) => e.emoji === replacementEmoji.emoji)) return;
+			if (this.message.reactions?.find((e) => e.emoji === replacementEmoji.emoji) && 
+			this.message.reactions?.find((e) => e.emoji === replacementEmoji.emoji)?.users.find((e) => e.id === this.user?.id)) return;
 			this.toggleReaction(replacementEmoji.emoji);
 		});
 	},
@@ -222,11 +252,15 @@ export default {
 		async toggleReaction(emoji: string) {
 			let { message } = await $fetch(`/api/channels/${this.channelId}/messages/${this.message.id}/reactions/${emoji}`, { method: 'POST' }) as { message: IMessage };
 
-			message.body = parseMessageBody(message.body, this.participants);
-
 			useActiveStore().updateMessage(message);
 		},
 		openEmojiPicker() {
+			console.log(useEmojiPickerStore().emojiPickerData);
+			if (useEmojiPickerStore().emojiPickerData.opened && useEmojiPickerStore().emojiPickerData.type === 'emojiPicker' && useEmojiPickerStore().emojiPickerData.openedBy?.messageId === this.message.id) {
+				useEmojiPickerStore().closeEmojiPicker();
+				return;
+			}
+
 			const actionButtons = document.getElementById(`actions-${this.message.id}`);
 			if (!actionButtons) return;
 
@@ -235,6 +269,7 @@ export default {
 			if (top + 522 > window.innerHeight) top = window.innerHeight - 522;
 
 			const payload = {
+				type: 'emojiPicker',
 				top,
 				right: actionButtons.clientWidth + 40,
 				openedBy: {
@@ -243,7 +278,35 @@ export default {
 				}
 			} as IPopupData;
 
-			useEmojiPickerStore().toggleEmojiPicker(payload);
+			useEmojiPickerStore().openEmojiPicker(payload);
+		},
+		openUserProfile() {
+			const messagePane = document.getElementById('messagePane') as HTMLDivElement;
+			const usernameElement = this.$refs.username as HTMLParagraphElement;
+			if (!usernameElement || !messagePane) return;
+
+			const elementRect = usernameElement.getBoundingClientRect();
+			let top = elementRect.top + window.pageYOffset;
+			const left = window.innerWidth - messagePane.clientWidth + 28 + usernameElement.clientWidth;
+			if (top + 522 > window.innerHeight) top = window.innerHeight - 522;
+
+			if (useEmojiPickerStore().emojiPickerData.opened && 
+				useEmojiPickerStore().emojiPickerData.type === 'userInfo' && 
+				useEmojiPickerStore().emojiPickerData.userId === this.message.creator.id &&
+				useEmojiPickerStore().emojiPickerData.top === top &&
+				useEmojiPickerStore().emojiPickerData.left === left) {
+				useEmojiPickerStore().closeEmojiPicker();
+				return;
+			}
+
+			const payload = {
+				type: 'userInfo',
+				top,
+				left,
+				userId: this.message.creator.id
+			} as IPopupData;
+
+			useEmojiPickerStore().openEmojiPicker(payload);
 		},
 		emojiStyles(emoji: string, width: number) {
 			const emojis = emojiJson;
@@ -298,6 +361,7 @@ pre.codeblock code {
 }
 
 code.inline-code {
+	color: var(--primary-accent);
 	background-color: var(--secondary-bg);
 	padding: 0.2rem;
 	font-size: 85%;

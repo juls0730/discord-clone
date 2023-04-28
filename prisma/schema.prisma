@@ -105,4 +105,6 @@ model Reaction {
   messageId String?
   Message   Message? @relation(fields: [messageId], references: [id])
   users     User[]   @relation("ReactionToUser")
+
+  @@unique([emoji, messageId])
 }

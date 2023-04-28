@@ -292,6 +292,41 @@
         </div>
       </div>
     </div>
+
+    <Modal
+      :opened="createChannelModelOpen"
+      @close="createChannelModelOpen = false"
+    >
+      <div
+        class="bg-[var(--secondary-bg)] rounded-xl shadow-2xl flex flex-row overflow-hidden z-20 absolute border border-[var(--tertiary-bg)] -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
+      >
+        <img
+          src="/ryan-klaus-5CkzYaubjkk-unsplash.jpg"
+          class="h-96 w-64 object-cover"
+        />
+        <div class="p-4 flex flex-col text-center">
+          <h1 class="font-semibold text-2xl">
+            Create Channel
+          </h1>
+          <form
+            class="flex flex-col gap-y-3 my-2"
+            @submit.prevent="createChannel"
+          >
+            <input
+              v-model="channelName"
+              class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+              name="name"
+              placeholder="Channel Name"
+            />
+            <input
+              type="submit"
+              value="Submit"
+              class="w-full bg-[#5865F2] py-2 px-4 rounded-md cursor-pointer"
+            />
+          </form>
+        </div>
+      </div>
+    </Modal>
   </aside>
 </template>
 
@@ -319,10 +354,10 @@ export default {
 	},
 	computed: {
 		userIsOwner() {
-			return this.activeServer.data.server && this.activeServer.type === 'server' && this.activeServer.data.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user?.id))?.owner;
+			return this.activeServer.type === 'server' && this.activeServer.data.server.participants.find((e) => e.id === this.user?.id)?.roles?.some((e) => e.owner === true);
 		},
 		userIsAdmin() {
-			return this.activeServer.data.server && this.activeServer.type === 'server' && this.activeServer.data.server.roles?.find((e: IRole) => e.users.some((el) => el.id === this.user?.id))?.administer;
+			return this.activeServer.type === 'server' && this.activeServer.data.server.participants.find((e) => e.id === this.user?.id)?.roles?.some((e) => e.administer === true);
 		}
 	},
 	methods: {
@@ -337,12 +372,14 @@ export default {
 
 			useServerStore().addChannel(this.activeServer.data.server.id, channel);
 			this.createChannelModelOpen = false;
+
+			navigateTo(`/channel/${channel.id}`);
 		},
 		async createInvite() {
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
 			const inviteCode = await $fetch(`/api/guilds/${this.activeServer.data.server.id}/createInvite`, { method: 'POST', headers });
 		},
-		async logout() {
+		logout() {
 			useUserStore().logout();
 		}
 	}

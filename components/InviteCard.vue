@@ -16,7 +16,7 @@
         <span
           class="before:bg-[var(--primary-accent)] before:h-2 before:w-2 before:inline-block before:my-auto before:rounded-full before:mr-1"
         />
-        <span>{{ invite.server.participants.filter((e: IUser) => e.online === true).length }} Online</span>
+        <span>{{ invite.server.participants.filter((e: SafeUser) => !!e.online).length }} Online</span>
       </div>
     </div>
     <div class="flex w-full justify-end">
@@ -40,7 +40,7 @@
 import { PropType } from 'vue';
 import { useServerStore } from '~/stores/serverStore';
 import { useUserStore } from '~/stores/userStore';
-import { IInviteCode, IUser } from '~/types';
+import { IInviteCode, IServer, IUser, SafeUser } from '~/types';
 
 export default {
 	props: {
@@ -57,16 +57,18 @@ export default {
 	},
 	computed: {
 		userInServer(): boolean {
-			return !!this.invite.server.participants.find((e: IUser) => e.id === this.user?.id);
+			return !!this.invite.server.participants.find((e: SafeUser) => e.id === this.user?.id);
 		}
 	},
 	methods: {
 		async joinServer(invite: IInviteCode) {
 			if (this.userInServer) return;
+			
 			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id }, headers });
+			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id }, headers }) as { server: IServer };
 			if (!server) return;
-			this.servers?.push(server);
+
+			useServerStore().addServer(server);
 			this.invite.server.participants.push(this.user);
 		},
 	}

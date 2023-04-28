@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
 
 	const channelId = event.context.params.id;
 
-	if (!req || !channelId) {
+	if (!req.body || !channelId || !req.body.trim()) {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'A body is required to send a message.',
@@ -166,6 +166,7 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			body: true,
+			createdAt: true,
 			creator: {
 				select: {
 					id: true,

@@ -1,5 +1,5 @@
 import emojiRegex from 'emoji-regex';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
 export default defineEventHandler(async (event) => {
@@ -123,21 +123,30 @@ export default defineEventHandler(async (event) => {
 			}
 		});
 	} else {
-		reaction = await prisma.reaction.create({
-			data: {
-				emoji,
-				users: {
-					connect: [{
-						id: event.context.user.id,
-					}]
-				},
-				Message: {
-					connect: {
-						id: message.id,
+		try {
+			reaction = await prisma.reaction.create({
+				data: {
+					emoji,
+					users: {
+						connect: [{
+							id: event.context.user.id,
+						}]
+					},
+					Message: {
+						connect: {
+							id: message.id,
+						}
 					}
 				}
+			});
+		} catch (err) {
+			if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+				// gracefully fail as it's likely a race condition
+				return;
+			} else {
+				throw err;
 			}
-		});
+		}
 	}
 
 	if (!reaction.messageId) return;

@@ -2,15 +2,13 @@ import { IPopupData } from '~/types';
 
 export const useEmojiPickerStore = defineStore('emojiPickerStore', {
 	state: () => ({
-		emojiPickerData: {type: 'emojiPicker'} as IPopupData,
+		emojiPickerData: {} as IPopupData,
 	}),
 	actions: {
 		openEmojiPicker(payload: IPopupData) {
-			this.emojiPickerData.type = 'emojiPicker';
-			this.emojiPickerData.top = payload.top;
-			this.emojiPickerData.right = payload.right;
-			this.emojiPickerData.openedBy = payload.openedBy;
-			this.emojiPickerData.opened = true;
+			console.log(this.emojiPickerData, payload);
+
+			this.emojiPickerData = { ...payload, opened: true };
 		},
 		toggleEmojiPicker(payload: IPopupData) {
 			let messageId;
@@ -31,7 +29,7 @@ export const useEmojiPickerStore = defineStore('emojiPickerStore', {
 		},
 		closeEmojiPicker() {
 			if (this.emojiPickerData.openedBy) this.emojiPickerData.openedBy.messageId = '';
-			this.emojiPickerData.opened = false;
+			this.emojiPickerData = { opened: false } as IPopupData;
 		},
 	}
 });

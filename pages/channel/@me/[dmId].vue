@@ -5,8 +5,8 @@
     :participants="participants"
   />
   <div
-    class="fixed mr-3"
-    :style="`top: ${emojiPickerData.top}px; right: ${emojiPickerData.right}px`"
+    class="fixed mx-3"
+    :style="`top: ${emojiPickerData.top}px; ${(emojiPickerData.right !== undefined) ? `right: ${emojiPickerData.right}px;` : `left: ${emojiPickerData.left}px`}`"
   >
     <Transition>
       <Popup
@@ -22,9 +22,8 @@
 import { useActiveStore } from '~/stores/activeStore';
 import { useDmStore } from '~/stores/dmStore';
 import { useEmojiPickerStore } from '~/stores/emojiPickerStore';
-import { useServerStore } from '~/stores/serverStore';
 import { useUserStore } from '~/stores/userStore';
-import { IChannel, IMessage, IServer, SafeUser } from '~/types';
+import { IChannel, IMessage, SafeUser } from '~/types';
 
 definePageMeta({
 	middleware: 'auth'
@@ -53,10 +52,6 @@ export default {
 
 		const channel = useActiveStore().dm;
 
-		channel.messages?.forEach((e: IMessage) => {
-			e.body = parseMessageBody(e.body, participants);
-		});
-
 		const friend = participants.find((e) => e.id !== useUserStore().user?.id)?.username;
 
 		useHeadSafe({
@@ -70,12 +65,7 @@ export default {
 	},
 	data() {
 		return {
-			// socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
 			emojiPickerData: storeToRefs(useEmojiPickerStore()).emojiPickerData,
-			emojiPickerStyles: {
-				top: storeToRefs(useEmojiPickerStore()).emojiPickerData.value.top + 'px',
-				right: storeToRefs(useEmojiPickerStore()).emojiPickerData.value.right + 'px',
-			}
 		};
 	},
 	methods: {

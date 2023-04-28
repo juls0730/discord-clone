@@ -2,9 +2,6 @@
 import emojiJson from '~/assets/json/emoji.json';
 
 export default {
-	props: {
-		opened: Boolean,
-	},
 	emits: ['picked-emoji'],
 	data() {
 		return {
@@ -22,7 +19,9 @@ export default {
 		};
 	},
 	methods: {
-		emojiStyles(emojiShortName: string, width: number) {
+		emojiStyles(emojiShortName: string | undefined, width: number) {
+			if (!emojiShortName) return;
+
 			const emojis = emojiJson;
 			const emoji = emojis.find((e) => e.short_names[0] === emojiShortName);
 			if (!emoji) return;
@@ -38,17 +37,17 @@ export default {
 			};
 		},
 		scrollTo(categoryName: string) {
-			const emojiPane = document.getElementById('emojiPane');
+			const emojiPane = (this.$refs.emojiPane as HTMLDivElement);
 			const category = document.getElementById(categoryName);
 			if (!emojiPane || !category) return;
-			emojiPane.scrollTop = category.offsetTop - 96;
+			emojiPane.scrollTop = category.offsetTop - 550;
 		}
 	}
 };
 </script>
 
 <template>
-  <div>
+  <div class="p-3">
     <div class="py-1.5 flex flex-col">
       <div class="flex-row gap-x-2 overflow-x-scroll">
         <button
@@ -232,13 +231,13 @@ export default {
     </div>
 
     <div
-      id="emoji-pane"
-      class="overflow-hidden overflow-y-scroll scroll-smooth EmojiPicker max-h-[450px]"
+      ref="emojiPane"
+      class="overflow-hidden overflow-y-scroll scroll-smooth EmojiPicker max-h-[calc(475px-24px-48px)]"
     >
       <div
         v-for="category in categories"
         :key="category.name"
-        class="text-black flex flex-col category bg-[var(--primary-dark)]"
+        class="text-black flex flex-col category bg-[var(--secondary-bg)]"
       >
         <h6 class="uppercase text-[var(--primary-text)] sticky top-0 bg-inherit z-10 py-1">
           {{

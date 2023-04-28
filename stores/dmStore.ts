@@ -1,4 +1,4 @@
-import { IChannel } from '~/types';
+import { IChannel, IUser, SafeUser } from '~/types';
 
 export const useDmStore = defineStore('dmStore', {
 	state: () => ({
@@ -18,6 +18,9 @@ export const useDmStore = defineStore('dmStore', {
 		},
 		getById(id: string) {
 			return this.dms.find((e) => e.id === id);
+		},
+		getByPartnerId(id: string) {
+			return this.dms.find((e) => e.dmParticipants?.some((e: SafeUser) => e.id === id));
 		}
 	}
 });

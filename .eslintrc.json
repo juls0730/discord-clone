@@ -20,7 +20,8 @@
         "storeToRefs": true,
         "useNuxtApp": true,
         "NodeJS": true,
-        "useHeadSafe": true
+        "useHeadSafe": true,
+				"defineEmits": true
     },
     "parser": "vue-eslint-parser",
     "parserOptions": {

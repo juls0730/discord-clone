@@ -1,12 +1,12 @@
 <!-- eslint-disable vue/no-multiple-template-root -->
 <template>
   <MessagePane
-    :channel="channel"
-    :participants="server.participants"
+    :channel="server.channel"
+    :participants="server.server.participants"
   />
   <div
-    class="fixed mr-3"
-    :style="`top: ${emojiPickerData.top}px; right: ${emojiPickerData.right}px`"
+    class="fixed mx-3"
+    :style="`top: ${emojiPickerData.top}px; ${(emojiPickerData.right !== undefined) ? `right: ${emojiPickerData.right}px;` : `left: ${emojiPickerData.left}px`}`"
   >
     <Transition>
       <Popup
@@ -49,38 +49,27 @@ export default {
 		}
 		useEmojiPickerStore().closeEmojiPicker();
 
-		const channel = useActiveStore().server.channel;
-		const server = useActiveStore().server.server;
-
-		channel.messages?.forEach((e: IMessage) => {
-			e.body = parseMessageBody(e.body, server.participants);
-		});
+		const server = useActiveStore().server;
 
 		useHeadSafe({
-			title: `#${channel.name} | ${server.name} - Blop`
+			title: `#${server.channel.name} | ${server.server.name} - Blop`
 		});
 
 		return {
-			channel,
 			server
 		};
 	},
 	data() {
 		return {
-			// socket: storeToRefs(useGlobalStore()).socket as unknown as Server,
 			emojiPickerData: storeToRefs(useEmojiPickerStore()).emojiPickerData,
-			emojiPickerStyles: {
-				top: storeToRefs(useEmojiPickerStore()).emojiPickerData.value.top + 'px',
-				right: storeToRefs(useEmojiPickerStore()).emojiPickerData.value.right + 'px',
-			}
 		};
 	},
 	async mounted() {
 		const { $io } = useNuxtApp();
 
-		(await $io).on(`addChannel-${this.server.id}`, (ev) => {
+		(await $io).on(`addChannel-${this.server.server.id}`, (ev) => {
 			const newChannel = ev as IChannel;
-			useServerStore().addChannel(this.server.id, newChannel);
+			useServerStore().addChannel(this.server.server.id, newChannel);
 		});
 	},
 	methods: {

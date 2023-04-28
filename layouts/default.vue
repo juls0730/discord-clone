@@ -13,7 +13,7 @@ import { useUserStore } from '~/stores/userStore';
 import { useServerStore } from '~/stores/serverStore';
 import { useDmStore } from '~/stores/dmStore';
 import { useActiveStore } from '~/stores/activeStore';
-import { IChannel } from '~/types';
+import { IChannel, IServer, SafeUser } from '~/types';
 
 export default {
 	async setup() {
@@ -25,8 +25,8 @@ export default {
 
 		if (!userStore.isLoggedIn) {
 			const [userData, serverData] = await Promise.all([
-				$fetch('/api/getCurrentUser', { headers }),
-				$fetch('/api/user/getServers', { headers })
+				$fetch('/api/getCurrentUser', { headers }) as Promise<SafeUser | null>,
+				$fetch('/api/user/getServers', { headers }) as Promise<{ dms: IChannel[], servers: IServer[] } | null>
 			]);
 
 			if (!userData || !serverData) throw new Error('No user data or server data');
@@ -40,7 +40,7 @@ export default {
 
 		const isDm = route.path.includes('@me');
 
-		if (isDm && route.params.dmId) {
+		if (isDm && route.params.dmId && useActiveStore().dm.id !== route.params.dmId) {
 			const dmData: IChannel = await $fetch(`/api/channels/${route.params.dmId}`, { headers });
 
 			if (!dmData) throw new Error('Could not find dm.');
@@ -49,11 +49,13 @@ export default {
 			useActiveStore().setActiveDM(dmData);
 		}
 
-		if (!isDm && route.params.channelId) {
+		if (!isDm && route.params.channelId && useActiveStore().server.channel.id !== route.params.channelId) {
 			const [channel, server] = await Promise.all([
-				$fetch(`/api/channels/${route.params.channelId}`, { headers }) as unknown as IChannel,
-				$fetch(`/api/channels/${route.params.channelId}/guild`, { headers })
+				$fetch(`/api/channels/${route.params.channelId}`, { headers }) as Promise<IChannel | null>,
+				$fetch(`/api/channels/${route.params.channelId}/guild`, { headers }) as Promise<IServer | null>
 			]);
+
+			if (!server || !channel) throw new Error('No channel or server');
 
 			if (!server) throw new Error('Could not find server.');
 			useServerStore().addServer(server);
@@ -62,14 +64,8 @@ export default {
 
 		if (isDm && !route.params.dmId) {
 			// on '/@me'
-			useActiveStore().type = 'dm';
+			useActiveStore().setActiveHome();
 		}
-
-		// const socket = ref(null);
-
-		// socket.value = io('127.0.0.1:3000', {
-		// 	auth: (cb) => cb({ token: useCookie('sessionToken').value })
-		// });
 	}
 };
 </script>

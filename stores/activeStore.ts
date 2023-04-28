@@ -1,5 +1,4 @@
-import { IChannel, IMessage, IServer } from '~/types';
-import { useServerStore } from './serverStore';
+import { IChannel, IMessage, IRole, IServer, SafeUser } from '~/types';
 
 export const useActiveStore = defineStore('activeStore', {
 	state: () => ({
@@ -11,11 +10,25 @@ export const useActiveStore = defineStore('activeStore', {
 		}
 	}),
 	actions: {
+		setActiveHome() {
+			this.server = {
+				server: {} as IServer,
+				channel: {} as IChannel
+			};
+
+			this.type = 'dm';
+		},
 		setActiveDM(dm: IChannel) {
+			this.server = {
+				server: {} as IServer,
+				channel: {} as IChannel
+			};
+
 			this.type = 'dm';
 			this.dm = dm;
 		},
 		setActiveServer(channel: IChannel, servers: IServer[]) {
+			this.dm = {} as IChannel;
 			this.type = 'server';
 
 			const activeServer = servers.find((e: IServer) => {
@@ -32,13 +45,39 @@ export const useActiveStore = defineStore('activeStore', {
 
 			const activeChannel = activeServer.channels[activeChannelIndex];
 
+			activeServer.roles.map((role: IRole) => {
+				role.users.map((e: SafeUser) => {
+					const userIndex = activeServer.participants.findIndex((user: SafeUser) => user.id === e.id);
+
+					if (activeServer.participants[userIndex] == undefined) return;
+
+					activeServer.participants[userIndex].roles = activeServer.participants[userIndex].roles || [];
+
+					const userRole = role;
+
+					delete(userRole.users);
+
+					activeServer.participants[userIndex].roles.push(userRole);
+				});
+			});
+
+			delete(activeServer.roles);
+
 			if (!activeChannel) return;
 
 			this.server.server = activeServer;
 			this.server.channel = activeChannel;
 		},
+		getMessageById(id: string) {
+			const channel = (this.type === 'server') ? this.server.channel : this.dm;
+
+			return channel.messages.find((e: IMessage) => e.id === id);
+		},
 		addMessage(message: IMessage) {
 			const channel = (this.type === 'server') ? this.server.channel : this.dm;
+
+			if (channel.messages.findIndex((e: IMessage) => e.id === message.id) !== -1) return;
+
 			channel.messages.push(message);
 		},
 		updateMessage(message: IMessage) {
@@ -52,11 +91,10 @@ export const useActiveStore = defineStore('activeStore', {
 		},
 		removeMessage(messageId: string) {
 			const channel = (this.type === 'server') ? this.server.channel : this.dm;
-			const messageIndex = channel.messages.findIndex((e: IMessage) => e.id === messageId);
 
-			if (messageIndex == -1) return;
+			if (!channel.messages.find(m => m.id === messageId)) return;
 
-			delete(channel.messages[messageIndex]);
+			channel.messages = channel.messages.filter((e: IMessage) => e.id !== messageId);
 		}
 	}
 });

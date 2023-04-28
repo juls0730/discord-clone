@@ -1,12 +1,15 @@
 <template>
   <div
     v-if="opened"
-    class="z-10 bg-[var(--primary-dark)] w-fit rounded-md shadow-md p-3"
+    class="z-10 bg-[var(--secondary-bg)] w-fit rounded-lg shadow-md border border-[var(--tertiary-bg)] overflow-hidden"
   >
-    <div class="max-w-[350px] max-h-[450px] overflow-hidden">
+    <div class="max-w-[374px] max-h-[475px] overflow-hidden">
       <EmojiPicker
         v-if="openedBy === 'emojiPicker'"
         @picked-emoji="$emit('picked-emoji', $event)"
+      />
+      <UserProfile
+        v-else
       />
     </div>
   </div>
@@ -16,10 +19,9 @@
 export default {
 	props: {
 		openedBy: {
-			type: String,
 			required: true
 		},
 		opened: Boolean
-	}
+	},
 };
 </script>

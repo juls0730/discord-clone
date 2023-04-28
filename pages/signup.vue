@@ -2,7 +2,7 @@
   <div class="w-screen h-screen flex justify-center items-center bg-[var(--primary-bg)]">
     <div class="bg-[var(--secondary-bg)] rounded-xl shadow-2xl flex flex-row overflow-hidden">
       <img
-        src="/flowery-plants.jpg"
+        src="/annie-spratt-8mqOw4DBBSg-unsplash.jpg"
         class="h-96 w-64 object-cover filter brightness-95"
       />
       <div class="p-4 flex flex-col text-center">
@@ -54,7 +54,7 @@
 import { useDmStore } from '~/stores/dmStore';
 import { useServerStore } from '~/stores/serverStore';
 import { useUserStore } from '~/stores/userStore';
-import { SafeUser } from '~/types';
+import { IChannel, IServer, SafeUser } from '~/types';
 
 definePageMeta({
 	layout: 'clean'
@@ -86,8 +86,8 @@ export default {
 
 			useUserStore().setUser(signupData.user);
 
-			useServerStore().setServers(signupData.user.servers);
-			useDmStore().setDms(signupData.user.channels);
+			useServerStore().setServers(signupData.user.servers || [] as IServer[]);
+			useDmStore().setDms(signupData.user.channels || [] as IChannel[]);
 
 			return navigateTo('/');
 		}

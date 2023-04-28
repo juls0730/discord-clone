@@ -21,7 +21,7 @@ export default {
 		};
 	},
 	mounted() {
-		useActiveStore().type = 'dm';
+		useActiveStore().setActiveHome();
 	},
 	methods: {
 		async startDM() {

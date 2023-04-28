@@ -21,19 +21,6 @@ export default defineEventHandler(async (event) => {
 
 	const { serverName } = body;
 
-	const preExistingServer = await prisma.server.findFirst({
-		where: {
-			name: serverName
-		}
-	}) as IServer | null;
-
-	if (preExistingServer) {
-		throw createError({
-			statusCode: 409,
-			statusMessage: `Server with name ${serverName} already exists.`,
-		});
-	}
-
 	const server = await prisma.server.create({
 		data: {
 			name: serverName,

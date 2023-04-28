@@ -77,10 +77,12 @@ export interface IReaction {
 export interface IPopupData {
 	opened: boolean;
 	top: number;
-	right: number;
+	right?: number;
+	left?: number;
 	type: 'emojiPicker' | 'userInfo';
 	openedBy?: {
 		type: 'message' | 'messageInput';
 		messageId?: string;
 	};
+	userId?: string;
 }

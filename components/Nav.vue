@@ -1,9 +1,14 @@
 <template>
   <nav class="bg-[var(--primary-bg)] h-screen p-4 grid grid-cols-1 grid-rows-[56px_1fr_56px] shadow shadow-black/80">
     <div>
-      <nuxt-link to="/channel/@me">
+      <nuxt-link
+        to="/channel/@me"
+        draggable="false"
+      >
         <button
-          class="bg-[var(--tertiary-bg)] p-3 rounded-full transition-all hover:rounded-[1.375rem] ease-in-out hover:bg-[var(--tertiary-lightened-bg)] duration-300"
+          class="bg-[var(--tertiary-bg)] p-3 transition-all ease-in-out hover:bg-[var(--tertiary-lightened-bg)] duration-300"
+          :class="(activeConversation.type === 'dm') ? 'rounded-[1.375rem]' : 'rounded-full hover:rounded-[1.375rem]'"
+          aria-label="Home"
         >
           <span>
             <svg
@@ -51,9 +56,12 @@
         v-for="server in servers"
         :key="server.id"
         :to="'/channel/' + server.channels[0]?.id"
+        draggable="false"
       >
         <button
-          class="bg-[var(--tertiary-bg)] p-3 rounded-full transition-all hover:rounded-[1.375rem] ease-in-out hover:bg-[var(--tertiary-lightened-bg)] duration-300 h-[56px] w-[56px]"
+          class="bg-[var(--tertiary-bg)] p-3 transition-all ease-in-out hover:bg-[var(--tertiary-lightened-bg)] duration-300 h-[56px] w-[56px]"
+          :class="(activeConversation.type === 'server' && activeConversation.server.server.id === server.id) ? 'rounded-[1.375rem]' : 'rounded-full hover:rounded-[1.375rem]'"
+          :aria-label="server.name"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -73,6 +81,7 @@
 
     <button
       class="p-3 rounded-full transition-colors ease-in-out hover:bg-[var(--tertiary-lightened-bg)] duration-300 cursor-pointer"
+      @click="createServerModalOpen = true"
     >
       <svg
         width="32"
@@ -89,17 +98,71 @@
         />
       </svg>
     </button>
+    <Modal
+      :opened="createServerModalOpen"
+      @close="createServerModalOpen = false"
+    >
+      <div
+        class="bg-[var(--secondary-bg)] rounded-xl shadow-2xl flex flex-row overflow-hidden z-20 absolute border border-[var(--tertiary-bg)] -translate-x-1/2 -translate-y-1/2 top-1/2 left-1/2"
+      >
+        <img
+          src="/eberhard-grossgasteiger-eBXIZe1DU7Y-unsplash.jpg"
+          class="h-96 w-64 object-cover"
+        />
+        <div class="p-4 flex flex-col text-center">
+          <h1 class="font-semibold text-2xl">
+            Create Server
+          </h1>
+          <form
+            class="flex flex-col gap-y-3 my-2"
+            @submit.prevent="createServer"
+          >
+            <input
+              v-model="serverName"
+              class="px-4 py-2 rounded-md w-full bg-[var(--primary-input)] shadow-2xl placeholder:text-[var(--primary-placeholder)] focus:outline-none"
+              name="name"
+              placeholder="Server Name"
+            />
+            <input
+              type="submit"
+              value="Submit"
+              class="w-full bg-[#5865F2] py-2 px-4 rounded-md cursor-pointer"
+            />
+          </form>
+        </div>
+      </div>
+    </Modal>
   </nav>
 </template>
 
 <script lang="ts">
+import { useActiveStore } from '~/stores/activeStore';
 import { useServerStore } from '~/stores/serverStore';
+import { IServer } from '~/types';
 
 export default {
 	data() {
 		return {
-			servers: storeToRefs(useServerStore()).servers
+			createServerModalOpen: false,
+			serverName: '',
+			servers: storeToRefs(useServerStore()).servers,
+			activeConversation: {
+				type: storeToRefs(useActiveStore()).type,
+				server: storeToRefs(useActiveStore()).server
+			}
 		};
+	},
+	methods: {
+		async createServer() {
+			const serverStore = useServerStore();
+			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+			const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName }, headers });
+			this.createServerModalOpen = false;
+			this.serverName = '';
+			serverStore.addServer(server);
+
+			navigateTo(`/channel/${server.channels[0].id}`);
+		}
 	}
 };
 </script>

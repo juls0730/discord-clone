@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
 import { SafeUser } from '~/types';
-const prisma = new PrismaClient();
+import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
@@ -17,6 +16,34 @@ export default defineEventHandler(async (event) => {
 		select: {
 			id: true,
 			username: true,
+			outgoingFriendRequests: {
+				where: {
+					status: 'sent'
+				},
+				select: {
+					id: true,
+					recipient: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
+				}
+			},
+			incomingFriendRequests: {
+				where: {
+					status: 'sent'
+				},
+				select: {
+					id: true,
+					sender: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
+				}
+			},
 			friends: {
 				select: {
 					id: true,

@@ -1,3 +1,17 @@
+<script lang="ts" setup>
+import { PropType } from 'vue';
+
+defineProps({
+	openedBy: {
+		type: String as PropType<'emojiPicker' | 'userProfile'>,
+		required: true
+	},
+	opened: Boolean
+});
+
+defineEmits(['picked-emoji']);
+</script>
+
 <template>
   <div
     v-if="opened"
@@ -14,14 +28,3 @@
     </div>
   </div>
 </template>
-
-<script>
-export default {
-	props: {
-		openedBy: {
-			required: true
-		},
-		opened: Boolean
-	},
-};
-</script>

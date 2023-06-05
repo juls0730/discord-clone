@@ -1,5 +1,4 @@
-import Redis from 'ioredis';
-const redis = new Redis();
+import redis from '~/server/utils/redis';
 
 const INCREMENT_LIMIT = 5;
 const LIMIT_TIME = 700; // milliseconds

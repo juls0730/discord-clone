@@ -1,16 +1,3 @@
-<template>
-  <div class="bg-[var(--primary-bg)] h-full">
-    <Popup
-      :opened="true"
-      :openedBy="'userInfo'"
-    />
-    <Popup
-      :opened="true"
-      :openedBy="'emojiPicker'"
-    />
-  </div>
-</template>
-
 <script lang="ts">
 import { useEmojiPickerStore } from '~/stores/emojiPickerStore';
 
@@ -29,3 +16,16 @@ export default {
 	}
 };
 </script>
+
+<template>
+  <div class="bg-[var(--primary-bg)] h-full">
+    <Popup
+      :opened="true"
+      :openedBy="'userInfo'"
+    />
+    <Popup
+      :opened="true"
+      :openedBy="'emojiPicker'"
+    />
+  </div>
+</template>

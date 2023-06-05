@@ -1,55 +1,51 @@
-<script lang="ts">
+<script lang="ts" setup>
 import emojiJson from '~/assets/json/emoji.json';
+import { ref } from 'vue';
 
-export default {
-	emits: ['picked-emoji'],
-	data() {
-		return {
-			emojis: emojiJson,
-			categories: [
-				{ name: 'people', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('smileys')).concat(emojiJson.filter((e) => e.category.toLowerCase().includes('people'))) },
-				{ name: 'nature', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('nature')) },
-				{ name: 'food', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('food')) },
-				{ name: 'activities', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('activities')) },
-				{ name: 'travel', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('travel')) },
-				{ name: 'objects', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('objects')) },
-				{ name: 'symbols', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('symbols')) },
-				{ name: 'flags', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('flags')) }
-			],
-		};
-	},
-	methods: {
-		emojiStyles(emojiShortName: string | undefined, width: number) {
-			if (!emojiShortName) return;
+defineEmits(['picked-emoji']);
 
-			const emojis = emojiJson;
-			const emoji = emojis.find((e) => e.short_names[0] === emojiShortName);
-			if (!emoji) return;
-			const sheet_x = (emoji.sheet_y * (width + 2));
-			const sheet_y = (emoji.sheet_x * (width + 2));
-			return {
-				background: 'url(/32.png)',
-				width: `${width}px`,
-				height: `${width}px`,
-				display: 'inline-block',
-				'background-position': `-${sheet_y + 1}px -${sheet_x + 1}px`,
-				'background-size': '6480% 6480%'
-			};
-		},
-		scrollTo(categoryName: string) {
-			const emojiPane = (this.$refs.emojiPane as HTMLDivElement);
-			const category = document.getElementById(categoryName);
-			if (!emojiPane || !category) return;
-			emojiPane.scrollTop = category.offsetTop - 550;
-		}
-	}
-};
+const emojiPane = ref(null as null | HTMLDivElement);
+const categories = [
+	{ name: 'people', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('smileys')).concat(emojiJson.filter((e) => e.category.toLowerCase().includes('people'))) },
+	{ name: 'nature', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('nature')) },
+	{ name: 'food', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('food')) },
+	{ name: 'activities', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('activities')) },
+	{ name: 'travel', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('travel')) },
+	{ name: 'objects', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('objects')) },
+	{ name: 'symbols', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('symbols')) },
+	{ name: 'flags', emojis: emojiJson.filter((e) => e.category.toLowerCase().includes('flags')) }
+];
+
+function emojiStyles(emojiShortName: string | undefined, width: number) {
+	if (!emojiShortName) return;
+	
+	const emojis = emojiJson;
+	const emoji = emojis.find((e) => e.short_names[0] === emojiShortName);
+	if (!emoji) return;
+	const sheet_x = (emoji.sheet_y * (width + 2));
+	const sheet_y = (emoji.sheet_x * (width + 2));
+	return {
+		background: 'url(/32.png)',
+		width: `${width}px`,
+		height: `${width}px`,
+		display: 'inline-block',
+		'background-position': `-${sheet_y + 1}px -${sheet_x + 1}px`,
+		'background-size': '6480% 6480%'
+	};
+}
+
+function scrollTo(categoryName: string) {
+	const category = document.getElementById(categoryName);
+	if (!emojiPane.value || !category) return;
+	// eww a magic number, it's just the emoji category picker height + category name height
+	emojiPane.value.scrollTop = category.offsetTop - 93;
+}
 </script>
 
 <template>
   <div class="p-3">
     <div class="py-1.5 flex flex-col">
-      <div class="flex-row gap-x-2 overflow-x-scroll">
+      <div class="flex-row gap-x-2 overflow-x-scroll text-[#fefefe]">
         <button
           class="p-1.5 bg-inherit hover:backdrop-brightness-125 rounded-md transition-all"
           @click="scrollTo('people')"

@@ -1,5 +1,64 @@
+<script lang="ts" setup>
+import { useActiveStore } from '~/stores/activeStore';
+import { useDmStore } from '~/stores/dmStore';
+import { useEmojiPickerStore } from '~/stores/emojiPickerStore';
+import { useUserStore } from '~/stores/userStore';
+import { IUser, IRole } from '~/types';
+import { ref, computed } from 'vue';
+
+const userData = useUserStore().user;
+const message = ref('');
+
+async function fetchUser() {
+	const emojiPickerData = useEmojiPickerStore().emojiPickerData;
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const activeServer = useActiveStore().server;
+
+	const isDm = useRoute().path.includes('@me');
+
+	let user: IUser | null;
+
+	if (isDm) {
+		user = await $fetch(`/api/user/${emojiPickerData.userId}/profile`, { headers }) as IUser | null;
+	} else {
+		user = await $fetch(`/api/user/${emojiPickerData.userId}/${activeServer.server.id}/profile`, { headers }) as IUser | null;
+	}
+
+	return { user, isDm };
+}
+
+const { user, isDm } = await fetchUser();
+const roles = computed(() => {
+	return user?.roles?.filter((e: IRole) => e.owner === false) || [];
+});
+const userIsOwner = computed(() => {
+	return user?.roles?.some((e: IRole) => e.owner === true) || false;
+});
+
+async function sendDM() {
+	if (!message.value.trim()) return;
+	if (!user) return;
+
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const preExistingDM = useDmStore().getByPartnerId(user.id);
+
+	if (!preExistingDM) return;
+			
+	if (preExistingDM && useRoute().path !== `/channel/@me/${preExistingDM.id}`) {
+		await navigateTo(`/channel/@me/${preExistingDM.id}`);
+	}
+
+	await $fetch(`/api/channels/${preExistingDM.id}/sendMessage`, { method: 'post', body: { body: message.value }, headers });
+	message.value = '';
+
+	useEmojiPickerStore().closeEmojiPicker();
+}
+
+if (!user || !userData) throw new Error('unknown error');
+</script>
+
 <template>
-  <div class="w-[374px] max-h-[475px] overflow-y-scroll">
+  <div class="w-[374px] max-h-[475px] overflow-y-scroll text-[#fefefe]">
     <div class="relative h-[calc(160px+56px)]">
       <div class="w-full h-40 absolute">
         <img
@@ -69,70 +128,3 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { useActiveStore } from '~/stores/activeStore';
-import { useDmStore } from '~/stores/dmStore';
-import { useEmojiPickerStore } from '~/stores/emojiPickerStore';
-import { useUserStore } from '~/stores/userStore';
-import { IUser, IRole } from '~/types';
-
-export default {
-	async setup() {
-		const userData = useUserStore().user;
-		async function fetchUser() {
-			const emojiPickerData = useEmojiPickerStore().emojiPickerData;
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const activeServer = useActiveStore().server;
-
-			const isDm = useRoute().path.includes('@me');
-
-			let user: IUser | null;
-
-			if (isDm) {
-				user = await $fetch(`/api/user/${emojiPickerData.userId}/profile`, { headers }) as IUser | null;
-			} else {
-				user = await $fetch(`/api/user/${emojiPickerData.userId}/${activeServer.server.id}/profile`, { headers }) as IUser | null;
-			}
-
-			return { user, isDm };
-		}
-
-		const { user, isDm } = await fetchUser();
-
-		if (!user) return;
-
-		return { user, isDm, fetchUser, userData };
-	},
-	data() {
-		return {
-			message: ''
-		};
-	},
-	computed: {
-		roles(): IRole[] {
-			return this.user.roles?.filter((e: IRole) => e.owner === false) || [];
-		},
-		userIsOwner(): boolean {
-			return this.user.roles?.some((e: IRole) => e.owner === true) || false;
-		}
-	},
-	methods: {
-		async sendDM() {
-			if (!this.message.trim()) return;
-
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const preExistingDM = useDmStore().getByPartnerId(this.user.id);
-			
-			if (preExistingDM && useRoute().path !== `/channel/@me/${preExistingDM.id}`) {
-				await navigateTo(`/channel/@me/${preExistingDM.id}`);
-			}
-
-			await $fetch(`/api/channels/${preExistingDM.id}/sendMessage`, { method: 'post', body: { body: this.message }, headers });
-			this.message = '';
-
-			useEmojiPickerStore().closeEmojiPicker();
-		},
-	}
-};
-</script>

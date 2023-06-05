@@ -1,3 +1,29 @@
+<script lang="ts" setup>
+import { useActiveStore } from '~/stores/activeStore';
+import { useServerStore } from '~/stores/serverStore';
+import { IServer } from '~/types';
+import { ref } from 'vue';
+
+const createServerModalOpen = ref(false);
+const serverName = ref('');
+const servers = storeToRefs(useServerStore()).servers;
+const activeConversation = ref({
+	type: storeToRefs(useActiveStore()).type,
+	server: storeToRefs(useActiveStore()).server
+});
+
+async function createServer() {
+	const serverStore = useServerStore();
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: serverName.value }, headers });
+	createServerModalOpen.value = false;
+	serverName.value = '';
+	serverStore.addServer(server);
+
+	navigateTo(`/channel/${server.channels[0]?.id}`);
+}
+</script>
+
 <template>
   <nav class="bg-[var(--primary-bg)] h-screen p-4 grid grid-cols-1 grid-rows-[56px_1fr_56px] shadow shadow-black/80">
     <div>
@@ -134,35 +160,3 @@
     </Modal>
   </nav>
 </template>
-
-<script lang="ts">
-import { useActiveStore } from '~/stores/activeStore';
-import { useServerStore } from '~/stores/serverStore';
-import { IServer } from '~/types';
-
-export default {
-	data() {
-		return {
-			createServerModalOpen: false,
-			serverName: '',
-			servers: storeToRefs(useServerStore()).servers,
-			activeConversation: {
-				type: storeToRefs(useActiveStore()).type,
-				server: storeToRefs(useActiveStore()).server
-			}
-		};
-	},
-	methods: {
-		async createServer() {
-			const serverStore = useServerStore();
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const server: IServer = await $fetch('/api/channels/create', { method: 'post', body: { serverName: this.serverName }, headers });
-			this.createServerModalOpen = false;
-			this.serverName = '';
-			serverStore.addServer(server);
-
-			navigateTo(`/channel/${server.channels[0].id}`);
-		}
-	}
-};
-</script>

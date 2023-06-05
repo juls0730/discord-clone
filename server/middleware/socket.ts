@@ -1,8 +1,6 @@
-import { Server } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
-import { IChannel, IServer, IUser, SafeUser } from '~~/types';
-import { Socket } from 'socket.io';
-const prisma = new PrismaClient();
+import { Server, Socket } from 'socket.io';
+import { IChannel, IServer, IUser, SafeUser } from '~/types';
+import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(({ node }) => {
 	if (global.io) return; 

@@ -12,14 +12,14 @@ export const useUserStore = defineStore('userStore', {
 			const that = this;
 
 			return new Promise<boolean>(resolve => {
-				function checkFlag() {
+				function checkAuthStatus() {
 					if(that.isLoggedIn === true) {
 						resolve(true);
 					}
 
-					setTimeout(checkFlag, 100);
+					setTimeout(checkAuthStatus, 100);
 				}
-				checkFlag();
+				checkAuthStatus();
 			});
 		},
 	},
@@ -28,13 +28,17 @@ export const useUserStore = defineStore('userStore', {
 			this.user = user;
 			this.isLoggedIn = true;
 		},
+		removeFriendRequest(friendRequestId: string) {
+			const type = (this.user?.incomingFriendRequests?.find((e) => e.id === friendRequestId)) ? 'incomingFriendRequests' : 'outgoingFriendRequests';
+
+			this.user[type] = this.user[type].filter((e) => e.id !== friendRequestId);
+		},
 		async logout() {
 			const { $io, $emit } = useNuxtApp();
 
 			(await $io).disconnect();
 			await $fetch('/api/user/logout');
 			useCookie('sessionToken').value = null;
-			useCookie('userId').value = null;
 
 			this.user = null;
 			this.isLoggedIn = false;

@@ -2,9 +2,8 @@ import bcryptjs from 'bcryptjs';
 import { v4 as uuidv4 } from 'uuid';
 import * as dotenv from 'dotenv';
 import crypto from 'node:crypto';
-import { PrismaClient } from '@prisma/client';
 import { IUser } from '~/types';
-const prisma = new PrismaClient();
+import prisma from '~/server/utils/prisma';
 dotenv.config();
 
 export default defineEventHandler(async (event) => {
@@ -19,13 +18,47 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	let user = await prisma.user.findFirst({
+	const user = await prisma.user.findFirst({
 		where: {
 			username: body.username
 		},
 		select: {
 			id: true,
 			username: true,
+			outgoingFriendRequests: {
+				where: {
+					status: 'sent'
+				},
+				select: {
+					id: true,
+					recipient: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
+				}
+			},
+			incomingFriendRequests: {
+				where: {
+					status: 'sent'
+				},
+				select: {
+					id: true,
+					sender: {
+						select: {
+							id: true,
+							username: true
+						}
+					}
+				}
+			},
+			friends: {
+				select: {
+					id: true,
+					username: true,
+				}
+			},
 			passwordhash: true,
 			servers: {
 				select: {

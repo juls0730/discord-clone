@@ -10,7 +10,7 @@ export default function parseBody(body: string, participants: SafeUser[]) {
 		[/&#126;&#126;\s?([^\n]+)&#126;&#126;/g, '<s>$1</s>'],
 
 		// code lines and blocks
-		[/&#96;&#96;&#96;(.+?)&#96;&#96;&#96;/g, '<pre class=\'codeblock\'><code>$1</code></pre>'],
+		[/&#96;&#96;&#96;(&#10;)?(.+?)&#96;&#96;&#96;/g, '<pre class=\'codeblock\'><code>$2</code></pre>'],
 		[/(?<!&#96;)&#96;(.+?)&#96;(?!&#96;)/g, '<code class=\'inline-code\'>$1</code>'],
 	];
 

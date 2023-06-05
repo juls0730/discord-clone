@@ -1,6 +1,5 @@
 import { IChannel, IServer, SafeUser } from '~/types';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
@@ -44,6 +43,9 @@ export default defineEventHandler(async (event) => {
 				}
 			},
 			messages: {
+				orderBy: {
+					createdAt: 'asc',
+				},
 				select: {
 					id: true,
 					body: true,

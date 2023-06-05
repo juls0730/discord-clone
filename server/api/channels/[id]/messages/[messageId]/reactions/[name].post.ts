@@ -1,6 +1,6 @@
+import { Prisma } from '@prisma/client';
 import emojiRegex from 'emoji-regex';
-import { Prisma, PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
@@ -37,6 +37,15 @@ export default defineEventHandler(async (event) => {
 			}
 		},
 		reactions: {
+			where: {
+				users: {
+					some: {
+						NOT: {
+							id: undefined,
+						}
+					}
+				}
+			},
 			select: {
 				id: true,
 				emoji: true,

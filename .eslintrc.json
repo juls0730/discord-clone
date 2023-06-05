@@ -1,64 +1,71 @@
 {
-    "env": {
-        "browser": true,
-        "es2021": true
-    },
-    "extends": [
-        "eslint:recommended",
-        "plugin:vue/recommended",
-        "plugin:@typescript-eslint/recommended"
-    ],
-    "globals": {
-        "useCookie": true,
-        "$fetch": true,
-        "definePageMeta": true,
-        "navigateTo": true,
-        "useRoute": true,
-        "useRouter": true,
-        "useRequestHeaders": true,
-        "parseMessageBody": true,
-        "storeToRefs": true,
-        "useNuxtApp": true,
-        "NodeJS": true,
-        "useHeadSafe": true,
-				"defineEmits": true
-    },
-    "parser": "vue-eslint-parser",
-    "parserOptions": {
-        "parser": "@typescript-eslint/parser",
-        "ecmaVersion": "latest",
-        "sourceType": "module"
-    },
-    "plugins": [
-        "vue",
-        "@typescript-eslint"
-    ],
-    "rules": {
-        "indent": [
-            "error",
-            "tab"
-        ],
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
-        "quotes": [
-            "error",
-            "single"
-        ],
-        "semi": [
-            "error",
-            "always"
-        ]
-    },
-    "overrides": [
-        {
-            "files": ["*.vue"],
-            "rules": {
-                "vue/multi-word-component-names": "off",
-                "vue/attribute-hyphenation": "off",
-								"vue/html-self-closing": "off"
-            }
-        }
-    ]
+	"env": {
+		"browser": true,
+		"es2021": true
+	},
+	"extends": [
+		"eslint:recommended",
+		"plugin:vue/vue3-recommended",
+		"plugin:@typescript-eslint/recommended"
+	],
+	"globals": {
+		"useCookie": true,
+		"$fetch": true,
+		"definePageMeta": true,
+		"navigateTo": true,
+		"useRoute": true,
+		"useRouter": true,
+		"useRequestHeaders": true,
+		"parseMessageBody": true,
+		"storeToRefs": true,
+		"useNuxtApp": true,
+		"NodeJS": true,
+		"useHeadSafe": true,
+		"defineEmits": true,
+		"module": true
+	},
+	"parser": "vue-eslint-parser",
+	"parserOptions": {
+		"parser": "@typescript-eslint/parser",
+		"ecmaVersion": "latest",
+		"sourceType": "module"
+	},
+	"plugins": [
+		"vue",
+		"@typescript-eslint"
+	],
+	"rules": {
+		"indent": [
+			"error",
+			"tab"
+		],
+		"linebreak-style": [
+			"error",
+			"unix"
+		],
+		"quotes": [
+			"error",
+			"single"
+		],
+		"semi": [
+			"error",
+			"always"
+		],
+		"vue/component-tags-order": [
+			"error", 
+			{
+				"order": [ "script", "template", "style" ]
+			}
+		]
+	},
+	"overrides": [
+		{
+			"files": ["*.vue"],
+			"rules": {
+				"vue/multi-word-component-names": "off",
+				"vue/attribute-hyphenation": "off",
+				"vue/html-self-closing": "off"
+			}
+		}
+	]
 }

@@ -15,10 +15,6 @@ export default defineNuxtConfig({
 		'@/assets/css/main.css'
 	],
 
-	devtools: {
-		enabled: false
-	},
-
 	modules: [
 		[
 			'@pinia/nuxt',
@@ -31,7 +27,6 @@ export default defineNuxtConfig({
 				],
 			},
 		],
-		'@nuxt/devtools'
 	],
 
 	postcss: {

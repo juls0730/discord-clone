@@ -1,5 +1,6 @@
 {
   "private": true,
+	"type": "module",
   "scripts": {
     "dev": "nuxi dev",
     "build": "nuxi build",
@@ -9,7 +10,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.4.6",
-    "@prisma/client": "^4.8.0",
+    "@prisma/client": "^4.13.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
@@ -23,7 +24,6 @@
     "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "@nuxt/devtools": "^0.4.1",
     "@types/bcryptjs": "^2.4.2",
     "@types/emoji-js": "^3.5.0",
     "@types/node": "^18.15.11",
@@ -34,7 +34,7 @@
     "eslint": "^8.38.0",
     "eslint-plugin-vue": "^9.11.0",
     "postcss": "^8.4.23",
-    "prisma": "^4.8.0",
+    "prisma": "^4.13.0",
     "tailwindcss": "^3.3.1"
   }
 }

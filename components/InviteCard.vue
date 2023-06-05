@@ -1,3 +1,35 @@
+<script lang="ts" setup>
+import { PropType, computed } from 'vue';
+import { useServerStore } from '~/stores/serverStore';
+import { useUserStore } from '~/stores/userStore';
+import { IInviteCode, IServer, SafeUser } from '~/types';
+
+const props = defineProps({
+	invite: {
+		type: Object as PropType<IInviteCode>,
+		required: true
+	}
+});
+
+const user = storeToRefs(useUserStore()).user;
+
+const userInServer = computed(() => {
+	return !!props.invite.server.participants.find((e: SafeUser) => e.id === user.value?.id);
+});
+
+async function joinServer(invite: IInviteCode) {
+	if (userInServer.value || !user.value) return;
+	
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id }, headers }) as { server: IServer };
+	if (!server) return;
+	
+	useServerStore().addServer(server);
+	// eslint-disable-next-line vue/no-mutating-props
+	props.invite.server.participants.push(user.value);
+}
+</script>
+
 <template>
   <div class="w-6/12 bg-[var(--secondary-bg)] mb-1 mt-0.5 p-4 rounded-md shadow-md mr-2">
     <p class="text-sm font-semibold text-zinc-100">
@@ -35,42 +67,3 @@
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { PropType } from 'vue';
-import { useServerStore } from '~/stores/serverStore';
-import { useUserStore } from '~/stores/userStore';
-import { IInviteCode, IServer, IUser, SafeUser } from '~/types';
-
-export default {
-	props: {
-		invite: {
-			type: Object as PropType<IInviteCode>,
-			required: true
-		}
-	},
-	data() {
-		return {
-			user: storeToRefs(useUserStore()).user,
-			servers: storeToRefs(useServerStore()).servers,
-		};
-	},
-	computed: {
-		userInServer(): boolean {
-			return !!this.invite.server.participants.find((e: SafeUser) => e.id === this.user?.id);
-		}
-	},
-	methods: {
-		async joinServer(invite: IInviteCode) {
-			if (this.userInServer) return;
-			
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const { server } = await $fetch('/api/guilds/joinGuild', { method: 'POST', body: { inviteId: invite.id }, headers }) as { server: IServer };
-			if (!server) return;
-
-			useServerStore().addServer(server);
-			this.invite.server.participants.push(this.user);
-		},
-	}
-};
-</script>

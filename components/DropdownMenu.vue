@@ -1,3 +1,16 @@
+<script lang="ts" setup>
+defineProps({
+	opened: {
+		type: Boolean,
+		required: true
+	},
+	inverted: {
+		type: Boolean,
+		default: false
+	}
+});
+</script>
+
 <template>
   <Transition name="pop-in">
     <div
@@ -10,15 +23,6 @@
     </div>
   </Transition>
 </template>
-
-<script lang="ts">
-export default {
-	props: {
-		opened: Boolean,
-		inverted: Boolean,
-	},
-};
-</script>
 
 <style>
 .dropdown {
@@ -43,11 +47,13 @@ export default {
 
 @keyframes pop-in {
 	0% {
-		transform: scale(0);
+		transform: scale(0.7);
+		opacity: 0;
 	}
 
 	100% {
 		transform: scale(1);
+		opacity: 1;
 	}
 }
 </style>

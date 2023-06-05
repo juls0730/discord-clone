@@ -1,3 +1,69 @@
+<script setup lang="ts">
+import { ref, computed } from 'vue';
+import { useActiveStore, useDmStore, useServerStore, useUserStore } from '~/stores';
+import { IChannel } from '~/types';
+
+const activeServer = ref({
+	type: storeToRefs(useActiveStore()).type,
+	data: storeToRefs(useActiveStore()).server,
+});
+
+const user = storeToRefs(useUserStore()).user;
+const dms = storeToRefs(useDmStore()).dms;
+const channelName = ref('');
+const createChannelModelOpen = ref(false);
+const serverDropdownOpen = ref(false);
+const userDropdownOpen = ref(false);
+
+const userIsOwner = computed(() => {
+	return (
+		activeServer.value.type === 'server' &&
+    activeServer.value.data.server.participants.find((e) => e.id === user.value?.id)?.roles?.some((e) => e.owner === true)
+	);
+});
+
+const userIsAdmin = computed(() => {
+	return (
+		activeServer.value.type === 'server' &&
+    activeServer.value.data.server.participants.find((e) => e.id === user.value?.id)?.roles?.some((e) => e.administer === true)
+	);
+});
+
+const openCreateChannelModel = () => {
+	createChannelModelOpen.value = true;
+};
+
+const createChannel = async () => {
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const channel = await $fetch(
+		`/api/guilds/${activeServer.value.data.server.id}/addChannel`,
+		{ method: 'POST', body: { channelName: channelName.value }, headers }
+	) as IChannel;
+
+	if (!channel) return;
+
+	useServerStore().addChannel(
+		activeServer.value.data.server.id,
+		channel
+	);
+	createChannelModelOpen.value = false;
+
+	navigateTo(`/channel/${channel.id}`);
+};
+
+const createInvite = async () => {
+	const headers = useRequestHeaders(['cookie']) as Record<string, string>;
+	const inviteCode = await $fetch(
+		`/api/guilds/${activeServer.value.data.server.id}/createInvite`,
+		{ method: 'POST', headers }
+	);
+};
+
+const logout = () => {
+	useUserStore().logout();
+};
+</script>
+
 <template>
   <aside class="bg-[var(--secondary-bg)] min-w-60 w-60 h-screen shadow-sm text-white select-none relative z-[2]">
     <div
@@ -15,18 +81,41 @@
       <div
         class="h-[calc(100%-12px)] grid grid-rows-[1fr_56px] bg-[var(--foreground-color)]"
       >
-        <div class="h-fit">
+        <div class="flex gap-y-1.5 px-1.5 mt-2 flex-col overflow-y-auto overflow-x-hidden">
+          <nuxt-link to="/channel/@me">
+            <button
+              class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded-md drop-shadow-sm gap-1/5 cursor-pointer items-center hover:backdrop-brightness-[1.35]"
+            >
+              <span class="mr-1">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                ><path
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 7a4 4 0 1 0 8 0a4 4 0 0 0-8 0M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"
+                /></svg>
+              </span>
+              Friends
+            </button>
+          </nuxt-link>
+          <hr class="w-11/12 mx-auto border border-[var(--tertiary-lightened-bg)]" />
           <nuxt-link
             v-for="dm in dms"
             :key="dm.id"
             class="hover:no-underline"
             :to="'/channel/@me/' + dm.id"
           >
-            <div
-              class="mx-2 my-4 bg-inherit hover:backdrop-brightness-[1.35] px-2 py-2 max-h-10 h-10 overflow-ellipsis transition-all"
+            <button
+              class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded-md drop-shadow-sm gap-1/5 cursor-pointer items-center hover:backdrop-brightness-[1.35]"
             >
               {{ dm.dmParticipants?.find((e) => e.id !== user?.id)?.username }}
-            </div>
+            </button>
           </nuxt-link>
         </div>
       </div>
@@ -138,7 +227,7 @@
           >
             <button
               :class="(activeServer.data.channel.id === channel.id) ? 'backdrop-brightness-[1.35]' : 'hover:backdrop-brightness-[1.35]'"
-              class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded drop-shadow-sm gap-1/5 cursor-pointer items-center"
+              class="flex text-center bg-inherit px-2 py-1.5 w-full transition-all rounded-md drop-shadow-sm gap-1/5 cursor-pointer items-center"
             >
               <span class="h-fit">
                 <svg
@@ -159,7 +248,7 @@
           </nuxt-link>
           <button
             v-if="userIsOwner || userIsAdmin"
-            class="flex text-center bg-inherit hover:backdrop-brightness-[1.45] px-2 py-1.5 w-full transition-all rounded drop-shadow-sm cursor-pointer items-center"
+            class="flex text-center bg-inherit hover:backdrop-brightness-[1.45] px-2 py-1.5 w-full transition-all rounded-md drop-shadow-sm cursor-pointer items-center"
             @click="openCreateChannelModel"
           >
             <span>
@@ -224,7 +313,7 @@
                   </span>
                 </DropdownItem>
                 <DropdownItem
-                  danger="true"
+                  :danger="true"
                   @click="logout"
                 >
                   <span>
@@ -329,59 +418,3 @@
     </Modal>
   </aside>
 </template>
-
-<script lang="ts">
-import { useActiveStore } from '~/stores/activeStore';
-import { useDmStore } from '~/stores/dmStore';
-import { useServerStore } from '~/stores/serverStore';
-import { useUserStore } from '~/stores/userStore';
-import { IChannel, IRole } from '~/types';
-
-export default {
-	data() {
-		return {
-			activeServer: {
-				type: storeToRefs(useActiveStore()).type,
-				data: storeToRefs(useActiveStore()).server,
-			},
-			user: storeToRefs(useUserStore()).user,
-			dms: storeToRefs(useDmStore()).dms,
-			channelName: '',
-			createChannelModelOpen: false,
-			serverDropdownOpen: false,
-			userDropdownOpen: false,
-		};
-	},
-	computed: {
-		userIsOwner() {
-			return this.activeServer.type === 'server' && this.activeServer.data.server.participants.find((e) => e.id === this.user?.id)?.roles?.some((e) => e.owner === true);
-		},
-		userIsAdmin() {
-			return this.activeServer.type === 'server' && this.activeServer.data.server.participants.find((e) => e.id === this.user?.id)?.roles?.some((e) => e.administer === true);
-		}
-	},
-	methods: {
-		openCreateChannelModel() {
-			this.createChannelModelOpen = true;
-		},
-		async createChannel() {
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const channel = await $fetch(`/api/guilds/${this.activeServer.data.server.id}/addChannel`, { method: 'POST', body: { channelName: this.channelName }, headers }) as IChannel;
-
-			if (!channel) return;
-
-			useServerStore().addChannel(this.activeServer.data.server.id, channel);
-			this.createChannelModelOpen = false;
-
-			navigateTo(`/channel/${channel.id}`);
-		},
-		async createInvite() {
-			const headers = useRequestHeaders(['cookie']) as Record<string, string>;
-			const inviteCode = await $fetch(`/api/guilds/${this.activeServer.data.server.id}/createInvite`, { method: 'POST', headers });
-		},
-		logout() {
-			useUserStore().logout();
-		}
-	}
-};
-</script>

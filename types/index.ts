@@ -2,6 +2,9 @@ export interface IUser {
 	id: string;
 	email: string;
 	username: string;
+	friends?: Array<IUser>;
+	outgoingFriendRequests?: Array<IFriendRequest>;
+	incomingFriendRequests?: Array<IFriendRequest>;
 	online?: boolean;
 	passwordhash: string;
 	servers?: Array<IServer>;
@@ -85,4 +88,10 @@ export interface IPopupData {
 		messageId?: string;
 	};
 	userId?: string;
+}
+
+export interface IFriendRequest {
+	id: string;
+	recipient?: IUser;
+	sender?: IUser;
 }

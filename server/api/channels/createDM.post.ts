@@ -1,6 +1,5 @@
 import { IChannel, SafeUser } from '~/types';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import prisma from '~/server/utils/prisma';
 
 export default defineEventHandler(async (event) => {
 	if (!event.context.user.authenticated) {
@@ -10,14 +9,16 @@ export default defineEventHandler(async (event) => {
 		});
 	}
 
-	const { partnerId } = await readBody(event);
+	const body = await readBody(event);
 
-	if (!partnerId) {
+	if (!body || !body.partnerId) {
 		throw createError({
 			statusCode: 400,
 			statusMessage: 'A friend is required to create a DM.',
 		});
 	}
+
+	const { partnerId } = body;
 
 	const partner = await prisma.user.findFirst({
 		where: {

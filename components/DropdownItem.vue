@@ -1,3 +1,12 @@
+<script setup>
+defineProps({
+	danger: {
+		type: Boolean,
+		required: true
+	}
+});
+</script>
+
 <template>
   <li>
     <button
@@ -8,11 +17,3 @@
     </button>
   </li>
 </template>
-
-<script>
-export default {
-	props: {
-		danger: Boolean,
-	},
-};
-</script>

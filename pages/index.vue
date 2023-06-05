@@ -1,31 +1,18 @@
-<template>
-  <div v-if="user.isLoggedIn">
-    Hello, {{ user.user?.username }}
-		<button @click="user.logout">
-			Logout
-		</button>
-	</div>
-  <div v-else>
-    <nuxt-link to="/login">
-      Login
-    </nuxt-link>
-    or
-    <nuxt-link to="/signup">
-      Sign Up
-    </nuxt-link>
-  </div>
-</template>
-
-<script lang="ts">
+<script lang="ts" setup>
 import { useUserStore } from '~/stores/userStore';
 
 definePageMeta({  
 	middleware: 'auth'
 });
 
-export default {
-	setup() {
-		return { user: useUserStore() };
-	}
-};
+const user = useUserStore();
 </script>
+
+<template>
+  <div>
+    Hello, {{ user.user?.username }}
+    <button @click="user.logout">
+      Logout
+    </button>
+  </div>
+</template>

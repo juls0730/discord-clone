@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@pinia/nuxt": "^0.4.6",
-    "@prisma/client": "^4.13.0",
+    "@prisma/client": "^4.16.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",

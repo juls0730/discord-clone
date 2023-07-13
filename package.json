@@ -18,7 +18,7 @@
     "mitt": "^3.0.0",
     "nuxt": "^3.0.0",
     "pinia": "^2.0.28",
-    "socket.io": "^4.5.4",
+    "socket.io": "^4.7.0",
     "socket.io-client": "^4.6.1",
     "twemoji": "^14.0.2",
     "uuid": "^9.0.0"

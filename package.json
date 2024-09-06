@@ -9,14 +9,14 @@
     "lint": "eslint --ext .js,.vue,.ts ."
   },
   "dependencies": {
-    "@pinia/nuxt": "^0.4.6",
+    "@pinia/nuxt": "^0.5.2",
     "@prisma/client": "^4.13.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
     "ioredis": "^5.3.2",
     "mitt": "^3.0.0",
-    "nuxt": "^3.0.0",
+    "nuxt": "^3.13.1",
     "pinia": "^2.0.28",
     "socket.io": "^4.5.4",
     "socket.io-client": "^4.6.1",

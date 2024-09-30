@@ -14,7 +14,7 @@
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
     "emoji-regex": "^10.2.1",
-    "ioredis": "^5.3.2",
+    "ioredis": "^5.4.1",
     "mitt": "^3.0.0",
     "nuxt": "^3.0.0",
     "pinia": "^2.0.28",

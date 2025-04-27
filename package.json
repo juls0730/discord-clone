@@ -9,7 +9,7 @@
     "lint": "eslint --ext .js,.vue,.ts ."
   },
   "dependencies": {
-    "@pinia/nuxt": "^0.4.6",
+    "@pinia/nuxt": "^0.10.1",
     "@prisma/client": "^4.13.0",
     "bcryptjs": "^2.4.3",
     "dotenv": "^16.0.3",
